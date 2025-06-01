@@ -4,8 +4,6 @@ services:
   zookeeper:
     image: confluentinc/cp-zookeeper:7.3.0
     container_name: zookeeper
-    ports:
-      - "2181:2181"
     environment:
       ZOOKEEPER_CLIENT_PORT: 2181
       ZOOKEEPER_TICK_TIME: 2000
@@ -17,18 +15,18 @@ services:
     container_name: kafka
     depends_on:
       - zookeeper
-    ports:
-      - "9092:9092"
     environment:
       KAFKA_BROKER_ID: 1
+      KAFKA_DEFAULT_REPLICATION_FACTOR: 1
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
       KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
-      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
-      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092,PLAINTEXT_HOST://localhost:9092
-      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092,PLAINTEXT_HOST://0.0.0.0:29092
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
+      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092
       KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
     networks:
       - data-net
 
+  # === PRODUCERS ===
   order-producer:
     build:
       context: ./producer/order
@@ -41,7 +39,7 @@ services:
   weather-producer:
     build:
       context: ./producer/weather
-    container_name: weather_api_producer
+    container_name: weather_producer
     depends_on:
       - kafka
     networks:
@@ -50,7 +48,36 @@ services:
   late-complaint-producer:
     build:
       context: ./producer/late_complaint
-    container_name: late_order_producer
+    container_name: late_complaint_producer
+    depends_on:
+      - kafka
+    networks:
+      - data-net
+
+  # === CONSUMERS ===
+  order-consumer:
+    build:
+      context: ./consumer/order
+    container_name: order_consumer
+    depends_on:
+      - kafka
+    restart: on-failure
+    networks:
+      - data-net
+
+  weather-consumer:
+    build:
+      context: ./consumer/weather
+    container_name: weather_consumer
+    depends_on:
+      - kafka
+    networks:
+      - data-net
+
+  late-complaint-consumer:
+    build:
+      context: ./consumer/late_complaint
+    container_name: late_complaint_consumer
     depends_on:
       - kafka
     networks:
@@ -58,4 +85,4 @@ services:
 
 networks:
   data-net:
-    external: true
+    driver: bridge

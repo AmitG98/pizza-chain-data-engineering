@@ -1,47 +1,44 @@
-# streaming/producer/order_producer.py
 from kafka import KafkaProducer
 import json
 import time
 import random
 from datetime import datetime, timedelta
-import time
 
-print("Waiting for Kafka to be ready...")
-time.sleep(10)
-
-producer = KafkaProducer(
-    bootstrap_servers='kafka:9092',
-    value_serializer=lambda v: json.dumps(v).encode('utf-8')
-)
-
-store_ids = [101, 102, 103]
-customer_ids = list(range(2000, 2100))
-addresses = [
-    "123 Main St, Tel Aviv",
-    "45 Herzl St, Haifa",
-    "88 Ben Yehuda St, Jerusalem"
-]
-statuses = ["delivered", "delayed", "canceled"]
-
-while True:
-    timestamp = datetime.utcnow()
-    estimated_minutes = random.randint(20, 60)
-    offset = random.randint(-10, 30)
-    actual_minutes = estimated_minutes + offset
-
-    order = {
+def generate_order():
+    now = datetime.utcnow()
+    delay = random.randint(-30, 30)
+    return {
         "order_id": random.randint(100000, 999999),
-        "timestamp": timestamp.isoformat(),
-        "customer_id": random.choice(customer_ids),
-        "store_id": random.choice(store_ids),
-        "delivery_address": random.choice(addresses),
-        "estimated_delivery_time": (timestamp + timedelta(minutes=estimated_minutes)).isoformat(),
-        "actual_delivery_time": (timestamp + timedelta(minutes=actual_minutes)).isoformat(),
-        "status": random.choices(
-            statuses, weights=[0.7, 0.2, 0.1], k=1
-        )[0]  # סיכוי גבוה להצלחה
+        "timestamp": now.isoformat(),
+        "customer_id": random.randint(2000, 2100),
+        "store_id": random.choice([101, 102, 103]),
+        "delivery_address": random.choice([
+            "123 Main St, Tel Aviv",
+            "45 Herzl St, Haifa",
+            "88 Ben Yehuda St, Jerusalem"
+        ]),
+        "estimated_delivery_time": (now + timedelta(minutes=30)).isoformat(),
+        "actual_delivery_time": (now + timedelta(minutes=30 + delay)).isoformat(),
+        "status": random.choice(["delivered", "delayed", "canceled"])
     }
 
-    print("Sending order:", order)
-    producer.send('orders-topic', order)
-    time.sleep(random.randint(2, 5))
+print("Waiting for Kafka to be ready...")
+time.sleep(15)
+
+print("Connecting to Kafka broker at kafka:9092")
+producer = KafkaProducer(
+    bootstrap_servers='kafka:9092',  # בתוך דוקר, זה השם של הקונטיינר
+    value_serializer=lambda v: json.dumps(v).encode('utf-8'),
+    retries=5
+)
+
+print("Producer is running and sending orders...")
+
+while True:
+    order = generate_order()
+    print(f"Sending order: {order}")
+    try:
+        producer.send('orders-topic', order).get(timeout=10)  # שימוש ב־get כדי לוודא שליחה
+    except Exception as e:
+        print(f"Failed to send: {e}")
+    time.sleep(3)
