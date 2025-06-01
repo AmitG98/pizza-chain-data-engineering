@@ -9,6 +9,7 @@ __pycache__/
 .env
 *.zip
 spark-warehouse/
+spark-data/
 metastore_db/
 .idea/
 .vscode/
