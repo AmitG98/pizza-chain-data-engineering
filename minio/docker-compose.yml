@@ -11,6 +11,8 @@ services:
       MINIO_ROOT_USER: minioadmin
       MINIO_ROOT_PASSWORD: minioadmin
     command: server /data --console-address ":9001"
+    networks:
+      - data-net
 
   minio-client:
     image: minio/mc
@@ -26,6 +28,12 @@ services:
       mc mb -p local/warehouse;
       exit 0;
       "
+    networks:
+      - data-net
 
 volumes:
   minio_data:
+
+networks:
+  data-net:
+    external: true

@@ -83,6 +83,16 @@ services:
     networks:
       - data-net
 
+  # === CLI TOOLS FOR KAFKA DEBUGGING ===
+  kafka-tools:
+    image: confluentinc/cp-kafka:7.3.0
+    container_name: kafka_tools
+    depends_on:
+      - kafka
+    entrypoint: ["sleep", "infinity"]
+    networks:
+      - data-net
+
 networks:
   data-net:
     driver: bridge

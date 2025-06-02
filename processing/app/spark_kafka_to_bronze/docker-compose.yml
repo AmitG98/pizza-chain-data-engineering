@@ -1,0 +1,68 @@
+version: '3.8'
+
+services:
+  spark-orders-bronze:
+    container_name: spark-orders-bronze
+    build: .
+    command: >
+      spark-submit
+      --packages org.apache.spark:spark-sql-kafka-0-10_2.12:3.5.1
+      --conf spark.sql.catalog.my_catalog=org.apache.iceberg.spark.SparkCatalog
+      --conf spark.sql.catalog.my_catalog.type=hadoop
+      --conf spark.sql.catalog.my_catalog.warehouse=s3a://warehouse
+      --conf spark.hadoop.fs.s3a.access.key=minioadmin
+      --conf spark.hadoop.fs.s3a.secret.key=minioadmin
+      --conf spark.hadoop.fs.s3a.endpoint=http://minio:9000
+      --conf spark.hadoop.fs.s3a.path.style.access=true
+      spark_kafka_to_bronze_orders.py
+    networks:
+      - data-net
+    volumes:
+      - spark_orders_checkpoint:/opt/spark-checkpoints/orders
+
+  spark-weather-bronze:
+    container_name: spark-weather-bronze
+    build: .
+    command: >
+      spark-submit
+      --packages org.apache.spark:spark-sql-kafka-0-10_2.12:3.5.1
+      --conf spark.sql.catalog.my_catalog=org.apache.iceberg.spark.SparkCatalog
+      --conf spark.sql.catalog.my_catalog.type=hadoop
+      --conf spark.sql.catalog.my_catalog.warehouse=s3a://warehouse
+      --conf spark.hadoop.fs.s3a.access.key=minioadmin
+      --conf spark.hadoop.fs.s3a.secret.key=minioadmin
+      --conf spark.hadoop.fs.s3a.endpoint=http://minio:9000
+      --conf spark.hadoop.fs.s3a.path.style.access=true
+      spark_kafka_to_bronze_weather.py
+    networks:
+      - data-net
+    volumes:
+      - spark_weather_checkpoint:/opt/spark-checkpoints/weather
+
+  spark-complaints-bronze:
+    container_name: spark-complaints-bronze
+    build: .
+    command: >
+      spark-submit
+      --packages org.apache.spark:spark-sql-kafka-0-10_2.12:3.5.1
+      --conf spark.sql.catalog.my_catalog=org.apache.iceberg.spark.SparkCatalog
+      --conf spark.sql.catalog.my_catalog.type=hadoop
+      --conf spark.sql.catalog.my_catalog.warehouse=s3a://warehouse
+      --conf spark.hadoop.fs.s3a.access.key=minioadmin
+      --conf spark.hadoop.fs.s3a.secret.key=minioadmin
+      --conf spark.hadoop.fs.s3a.endpoint=http://minio:9000
+      --conf spark.hadoop.fs.s3a.path.style.access=true
+      spark_kafka_to_bronze_complaints.py
+    networks:
+      - data-net
+    volumes:
+      - spark_complaints_checkpoint:/opt/spark-checkpoints/complaints
+
+networks:
+  data-net:
+    external: true
+
+volumes:
+  spark_orders_checkpoint:
+  spark_weather_checkpoint:
+  spark_complaints_checkpoint:

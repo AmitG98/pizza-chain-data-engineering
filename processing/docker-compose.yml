@@ -1,16 +1,12 @@
+version: '3.8'
+
 services:
-  spark:
-    image: bitnami/spark:3.4.1-debian-11-r0
-    container_name: spark
-    environment:
-      - SPARK_MODE=master
-      - HOME=/tmp
-      - SPARK_USER_HOME=/tmp
-    ports:
-      - "8080:8080"
-    volumes:
-      - ./app:/opt/spark-apps
-      - ../spark-data:/opt/bitnami/spark-data
+  spark-kafka-bronze:
+    build: .
+    container_name: spark_kafka_to_bronze
+    depends_on:
+      - kafka
+      - minio
     networks:
       - data-net
 

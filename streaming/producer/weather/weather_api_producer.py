@@ -16,7 +16,7 @@ conditions = ["Clear", "Partly Cloudy", "Cloudy", "Rain", "Storm", "Fog"]
 while True:
     weather = {
         "location": random.choice(locations),
-        "timestamp": datetime.utcnow().isoformat(),
+        "timestamp": datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S"),
         "temperature": round(random.uniform(10.0, 40.0), 1),
         "precipitation": round(random.uniform(0.0, 20.0), 1),
         "wind_speed": round(random.uniform(0.0, 15.0), 1),
