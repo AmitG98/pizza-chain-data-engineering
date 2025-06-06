@@ -1,0 +1,108 @@
+version: "3.8"
+
+services: 
+  spark-silver-orders:
+    container_name: spark-silver-orders
+    build: .
+    command: >
+      spark-submit
+      --packages org.apache.spark:spark-sql-kafka-0-10_2.12:3.5.1
+      --conf spark.sql.catalog.my_catalog=org.apache.iceberg.spark.SparkCatalog
+      --conf spark.sql.catalog.my_catalog.type=hadoop
+      --conf spark.sql.catalog.my_catalog.warehouse=s3a://warehouse
+      --conf spark.hadoop.fs.s3a.access.key=minioadmin
+      --conf spark.hadoop.fs.s3a.secret.key=minioadmin
+      --conf spark.hadoop.fs.s3a.endpoint=http://minio:9000
+      --conf spark.hadoop.fs.s3a.path.style.access=true
+      bronze_to_silver_orders.py
+    networks:
+      - data-net
+
+  spark-silver-complaints:
+    container_name: spark-silver-complaints
+    build: .
+    command: >
+      spark-submit
+      --packages org.apache.spark:spark-sql-kafka-0-10_2.12:3.5.1
+      --conf spark.sql.catalog.my_catalog=org.apache.iceberg.spark.SparkCatalog
+      --conf spark.sql.catalog.my_catalog.type=hadoop
+      --conf spark.sql.catalog.my_catalog.warehouse=s3a://warehouse
+      --conf spark.hadoop.fs.s3a.access.key=minioadmin
+      --conf spark.hadoop.fs.s3a.secret.key=minioadmin
+      --conf spark.hadoop.fs.s3a.endpoint=http://minio:9000
+      --conf spark.hadoop.fs.s3a.path.style.access=true
+      spark_bronze_to_silver/bronze_to_silver_complaints.py
+    networks:
+      - data-net
+
+  spark-silver-weather:
+    container_name: spark-silver-weather
+    build: .
+    command: >
+      spark-submit
+      --packages org.apache.spark:spark-sql-kafka-0-10_2.12:3.5.1
+      --conf spark.sql.catalog.my_catalog=org.apache.iceberg.spark.SparkCatalog
+      --conf spark.sql.catalog.my_catalog.type=hadoop
+      --conf spark.sql.catalog.my_catalog.warehouse=s3a://warehouse
+      --conf spark.hadoop.fs.s3a.access.key=minioadmin
+      --conf spark.hadoop.fs.s3a.secret.key=minioadmin
+      --conf spark.hadoop.fs.s3a.endpoint=http://minio:9000
+      --conf spark.hadoop.fs.s3a.path.style.access=true
+      spark_bronze_to_silver/bronze_to_silver_weather.py
+    networks:
+      - data-net
+
+  spark-silver-deliveries:
+    container_name: spark-silver-deliveries
+    build: .
+    command: >
+      spark-submit
+      --packages org.apache.spark:spark-sql-kafka-0-10_2.12:3.5.1
+      --conf spark.sql.catalog.my_catalog=org.apache.iceberg.spark.SparkCatalog
+      --conf spark.sql.catalog.my_catalog.type=hadoop
+      --conf spark.sql.catalog.my_catalog.warehouse=s3a://warehouse
+      --conf spark.hadoop.fs.s3a.access.key=minioadmin
+      --conf spark.hadoop.fs.s3a.secret.key=minioadmin
+      --conf spark.hadoop.fs.s3a.endpoint=http://minio:9000
+      --conf spark.hadoop.fs.s3a.path.style.access=true
+      spark_bronze_to_silver/bronze_to_silver_deliveries.py
+    networks:
+      - data-net
+
+  spark-silver-dim-time:
+    container_name: spark-silver-dim-time
+    build: .
+    command: >
+      spark-submit
+      --conf spark.sql.catalog.my_catalog=org.apache.iceberg.spark.SparkCatalog
+      --conf spark.sql.catalog.my_catalog.type=hadoop
+      --conf spark.sql.catalog.my_catalog.warehouse=s3a://warehouse
+      --conf spark.hadoop.fs.s3a.access.key=minioadmin
+      --conf spark.hadoop.fs.s3a.secret.key=minioadmin
+      --conf spark.hadoop.fs.s3a.endpoint=http://minio:9000
+      --conf spark.hadoop.fs.s3a.path.style.access=true
+      spark_bronze_to_silver/generate_silver_dim_time.py
+    networks:
+      - data-net
+
+  spark-silver-dim-store:
+    container_name: spark-silver-dim-store
+    build: .
+    command: >
+      spark-submit
+      --conf spark.sql.catalog.my_catalog=org.apache.iceberg.spark.SparkCatalog
+      --conf spark.sql.catalog.my_catalog.type=hadoop
+      --conf spark.sql.catalog.my_catalog.warehouse=s3a://warehouse
+      --conf spark.hadoop.fs.s3a.access.key=minioadmin
+      --conf spark.hadoop.fs.s3a.secret.key=minioadmin
+      --conf spark.hadoop.fs.s3a.endpoint=http://minio:9000
+      --conf spark.hadoop.fs.s3a.path.style.access=true
+      spark_bronze_to_silver/silver_dim_store.py
+    networks:
+      - data-net
+
+networks:
+  data-net:
+    external: true
+
+  

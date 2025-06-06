@@ -6,8 +6,12 @@ from pyspark.sql.types import StructType, StringType, IntegerType, TimestampType
 order_schema = StructType() \
     .add("order_id", IntegerType()) \
     .add("customer_id", IntegerType()) \
-    .add("order_time", TimestampType()) \
-    .add("order_value", IntegerType())
+    .add("store_id", IntegerType()) \
+    .add("timestamp", TimestampType()) \
+    .add("delivery_address", StringType()) \
+    .add("estimated_delivery_time", TimestampType()) \
+    .add("actual_delivery_time", TimestampType()) \
+    .add("status", StringType())
 
 spark = SparkSession.builder \
     .appName("KafkaToBronzeOrders") \
@@ -24,8 +28,12 @@ spark.sql("""
 CREATE TABLE IF NOT EXISTS my_catalog.orders_bronze (
   order_id INT,
   customer_id INT,
-  order_time TIMESTAMP,
-  order_value INT
+  store_id INT,
+  timestamp TIMESTAMP,
+  delivery_address STRING,
+  estimated_delivery_time TIMESTAMP,
+  actual_delivery_time TIMESTAMP,
+  status STRING
 )
 USING iceberg
 """)
