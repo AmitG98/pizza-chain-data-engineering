@@ -5,11 +5,14 @@ import random
 from datetime import datetime, timedelta
 
 def generate_order():
-    now = datetime.utcnow()
-    delay = random.randint(-30, 30)
+    # נניח שהאירוע התרחש עד 72 שעות אחורה
+    delay_minutes = random.randint(0, 72 * 60)
+    event_time = datetime.utcnow() - timedelta(minutes=delay_minutes)
+
     return {
         "order_id": random.randint(100000, 999999),
-        "timestamp": now.isoformat(),
+        "event_time": event_time.isoformat(),  # חדש: מתי ההזמנה באמת קרתה
+        "timestamp": datetime.utcnow().isoformat(),  # זמן השליחה ל-Kafka (ingestion)
         "customer_id": random.randint(2000, 2100),
         "store_id": random.choice([101, 102, 103]),
         "delivery_address": random.choice([
@@ -17,8 +20,8 @@ def generate_order():
             "45 Herzl St, Haifa",
             "88 Ben Yehuda St, Jerusalem"
         ]),
-        "estimated_delivery_time": (now + timedelta(minutes=30)).isoformat(),
-        "actual_delivery_time": (now + timedelta(minutes=30 + delay)).isoformat(),
+        "estimated_delivery_time": (event_time + timedelta(minutes=30)).isoformat(),
+        "actual_delivery_time": (event_time + timedelta(minutes=30 + random.randint(-30, 30))).isoformat(),
         "status": random.choice(["delivered", "delayed", "canceled"])
     }
 

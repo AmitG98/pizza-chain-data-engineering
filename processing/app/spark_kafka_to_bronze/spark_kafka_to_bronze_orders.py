@@ -1,12 +1,14 @@
 from pyspark.sql import SparkSession
 from pyspark.sql.functions import from_json, col
 from pyspark.sql.types import StructType, StringType, IntegerType, TimestampType
+from pyspark.sql.functions import current_timestamp, expr
 
 # Schema of the data coming from Kafka
 order_schema = StructType() \
     .add("order_id", IntegerType()) \
     .add("customer_id", IntegerType()) \
     .add("store_id", IntegerType()) \
+    .add("event_time", TimestampType()) \
     .add("timestamp", TimestampType()) \
     .add("delivery_address", StringType()) \
     .add("estimated_delivery_time", TimestampType()) \
@@ -29,6 +31,7 @@ CREATE TABLE IF NOT EXISTS my_catalog.orders_bronze (
   order_id INT,
   customer_id INT,
   store_id INT,
+  event_time TIMESTAMP,
   timestamp TIMESTAMP,
   delivery_address STRING,
   estimated_delivery_time TIMESTAMP,
@@ -37,6 +40,7 @@ CREATE TABLE IF NOT EXISTS my_catalog.orders_bronze (
 )
 USING iceberg
 """)
+
 
 df = spark.readStream \
     .format("kafka") \
@@ -49,7 +53,11 @@ parsed = df.selectExpr("CAST(value AS STRING) as json_string") \
     .select(from_json("json_string", order_schema).alias("data")) \
     .select("data.*")
 
-query = parsed.writeStream \
+filtered = parsed.filter(
+    col("event_time") >= expr("current_timestamp() - interval 48 hours")
+)
+
+query = filtered.writeStream \
     .format("iceberg") \
     .outputMode("append") \
     .option("checkpointLocation", "/tmp/checkpoints/orders_bronze") \

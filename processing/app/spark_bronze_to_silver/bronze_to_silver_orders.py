@@ -35,8 +35,26 @@ df_clean = df \
     .filter(col("actual_delivery_time") >= col("estimated_delivery_time")) \
     .dropDuplicates()
 
-# Write to Silver table
+# Define the full schema for Silver table
+silver_table_schema = """
+CREATE TABLE my_catalog.silver_orders_clean (
+  order_id INT,
+  customer_id INT,
+  store_id INT,
+  event_time TIMESTAMP,
+  order_time TIMESTAMP,
+  delivery_address STRING,
+  estimated_delivery_time TIMESTAMP,
+  actual_delivery_time TIMESTAMP,
+  status STRING,
+  delivery_delay DOUBLE
+)
+USING iceberg
+"""
+
+# Create the table if it doesn't exist
 if not spark.catalog.tableExists("my_catalog.silver_orders_clean"):
-    df_clean.writeTo("my_catalog.silver_orders_clean").createOrReplace()
-else:
-    df_clean.writeTo("my_catalog.silver_orders_clean").append()
+    spark.sql(silver_table_schema)
+
+# Write to Silver table
+df_clean.writeTo("my_catalog.silver_orders_clean").append()
