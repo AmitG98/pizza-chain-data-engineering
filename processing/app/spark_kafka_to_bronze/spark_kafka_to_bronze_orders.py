@@ -41,13 +41,21 @@ CREATE TABLE IF NOT EXISTS my_catalog.orders_bronze (
 USING iceberg
 """)
 
-
-df = spark.readStream \
+# קריאה חד פעמית מ־Kafka
+df = spark.read \
     .format("kafka") \
     .option("kafka.bootstrap.servers", "kafka:9092") \
     .option("subscribe", "orders-topic") \
-    .option("startingOffsets", "earliest") \
+    .option("startingOffsets", "latest") \
+    .option("endingOffsets", "latest") \
     .load()
+
+# df = spark.readStream \
+#     .format("kafka") \
+#     .option("kafka.bootstrap.servers", "kafka:9092") \
+#     .option("subscribe", "orders-topic") \
+#     .option("startingOffsets", "earliest") \
+#     .load()
 
 parsed = df.selectExpr("CAST(value AS STRING) as json_string") \
     .select(from_json("json_string", order_schema).alias("data")) \
@@ -57,10 +65,12 @@ filtered = parsed.filter(
     col("event_time") >= expr("current_timestamp() - interval 48 hours")
 )
 
-query = filtered.writeStream \
-    .format("iceberg") \
-    .outputMode("append") \
-    .option("checkpointLocation", "/tmp/checkpoints/orders_bronze") \
-    .toTable("my_catalog.orders_bronze")
+filtered.writeTo("my_catalog.orders_bronze").append()
 
-query.awaitTermination()
+# query = filtered.writeStream \
+#     .format("iceberg") \
+#     .outputMode("append") \
+#     .option("checkpointLocation", "/tmp/checkpoints/orders_bronze") \
+#     .toTable("my_catalog.orders_bronze")
+
+# query.awaitTermination()

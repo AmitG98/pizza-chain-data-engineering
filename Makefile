@@ -16,15 +16,15 @@ bronze: bronze-orders bronze-weather bronze-complaints
 
 bronze-orders:
 	@echo ">>> Running Bronze Orders Job..."
-	docker compose -f app/spark_kafka_to_bronze/docker-compose.yml up --build --abort-on-container-exit --exit-code-from spark-orders-bronze
+	docker compose -f processing/app/spark_kafka_to_bronze/docker-compose.yml up --build --abort-on-container-exit --exit-code-from spark-orders-bronze
 
 bronze-weather:
 	@echo ">>> Running Bronze Weather Job..."
-	docker compose -f app/spark_kafka_to_bronze/docker-compose.yml up --build --abort-on-container-exit --exit-code-from spark-weather-bronze
+	docker compose -f processing/app/spark_kafka_to_bronze/docker-compose.yml up --build --abort-on-container-exit --exit-code-from spark-weather-bronze
 
 bronze-complaints:
 	@echo ">>> Running Bronze Complaints Job..."
-	docker compose -f app/spark_kafka_to_bronze/docker-compose.yml up --build --abort-on-container-exit --exit-code-from spark-complaints-bronze
+	docker compose -f processing/app/spark_kafka_to_bronze/docker-compose.yml up --build --abort-on-container-exit --exit-code-from spark-complaints-bronze
 
 # ----------------------------
 # Run Silver Layer Jobs
@@ -120,3 +120,12 @@ quality-dim-store:
 quality-all: quality-orders quality-complaints
 	@echo ">>> All Quality Checks Completed"
 
+
+# ----------------------------
+# Run Data Air flow
+# ----------------------------
+airflow-up:
+	docker compose -f orchestration/docker-compose.yml up -d --build
+
+airflow-down:
+	docker compose -f orchestration/docker-compose.yml down
