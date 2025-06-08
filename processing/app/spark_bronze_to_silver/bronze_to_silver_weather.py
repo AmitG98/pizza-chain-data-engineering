@@ -1,5 +1,7 @@
 from pyspark.sql import SparkSession
-from pyspark.sql.functions import col, unix_timestamp, expr, trim, lower, abs as abs_spark
+from pyspark.sql.functions import col, unix_timestamp, expr, trim, lower, size, when
+from pyspark.sql.functions import abs as abs_spark
+
 
 # Start SparkSession
 spark = SparkSession.builder \
@@ -21,7 +23,12 @@ orders_df = spark.read.format("iceberg").load("my_catalog.silver_orders_clean")
 weather_df = weather_df.dropna(subset=["timestamp", "location", "temperature", "precipitation", "wind_speed", "weather_condition"])
 
 # Add region column to orders (extract from delivery_address)
-orders_df = orders_df.withColumn("region", trim(expr("split(delivery_address, ',')[1]")))
+orders_df = orders_df.withColumn(
+    "region",
+    when(size(expr("split(delivery_address, ',')")) > 1,
+         trim(expr("split(delivery_address, ',')[1]"))
+    ).otherwise(None)
+)
 
 # Normalize region and city names
 orders_df = orders_df.withColumn("region_normalized", lower(col("region")))
@@ -31,7 +38,9 @@ weather_df = weather_df.withColumn("city_normalized", lower(trim(col("location")
 joined = orders_df.alias("orders").join(
     weather_df.alias("weather"),
     (col("orders.region_normalized") == col("weather.city_normalized")) &
-    (abs_spark(unix_timestamp(col("orders.order_time")) - unix_timestamp(col("weather.timestamp"))) <= 3600),
+    (abs_spark(
+        unix_timestamp(col("orders.order_time")) - unix_timestamp(col("weather.timestamp"))
+    ) <= 3600),
     how="left"
 )
 
@@ -47,4 +56,8 @@ result = joined.select(
 ).dropDuplicates()
 
 # Write to Silver table
-result.writeTo("my_catalog.silver_weather_enriched").createOrReplace()
+if not spark.catalog.tableExists("my_catalog.silver_weather_enriched"):
+    result.writeTo("my_catalog.silver_weather_enriched").createOrReplace()
+else:
+    result.writeTo("my_catalog.silver_weather_enriched").append()
+

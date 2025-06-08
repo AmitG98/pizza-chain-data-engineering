@@ -65,4 +65,8 @@ columns = [
 final_df = final_df.select(*columns)
 
 # Write to Iceberg table
-final_df.writeTo("my_catalog.silver_deliveries_enriched").createOrReplace()
+if not spark.catalog.tableExists("my_catalog.silver_deliveries_enriched"):
+    final_df.writeTo("my_catalog.silver_deliveries_enriched").createOrReplace()
+else:
+    final_df.writeTo("my_catalog.silver_deliveries_enriched").append()
+

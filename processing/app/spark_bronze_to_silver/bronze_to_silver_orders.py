@@ -16,7 +16,8 @@ spark = SparkSession.builder \
 # Load Bronze table
 df = spark.read.format("iceberg").load("my_catalog.orders_bronze")
 
-df = df.withColumnRenamed("timestamp", "order_time")
+# Add order_time column (copy of timestamp)
+df = df.withColumn("order_time", col("timestamp"))
 
 # Add delivery_delay in minutes
 df = df.withColumn("delivery_delay",
@@ -35,4 +36,7 @@ df_clean = df \
     .dropDuplicates()
 
 # Write to Silver table
-df_clean.writeTo("my_catalog.silver_orders_clean").createOrReplace()
+if not spark.catalog.tableExists("my_catalog.silver_orders_clean"):
+    df_clean.writeTo("my_catalog.silver_orders_clean").createOrReplace()
+else:
+    df_clean.writeTo("my_catalog.silver_orders_clean").append()

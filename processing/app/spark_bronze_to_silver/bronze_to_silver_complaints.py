@@ -26,4 +26,8 @@ df_clean = df \
     .dropDuplicates()
 
 # Write to Silver table
-df_clean.writeTo("my_catalog.silver_complaints_clean").createOrReplace()
+if not spark.catalog.tableExists("my_catalog.silver_complaints_clean"):
+    df_clean.writeTo("my_catalog.silver_complaints_clean").createOrReplace()
+else:
+    df_clean.writeTo("my_catalog.silver_complaints_clean").append()
+

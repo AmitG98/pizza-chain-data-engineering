@@ -34,4 +34,7 @@ df = df.withColumn("is_holiday", date_format("date", "MM-dd").isin(holidays))
 df = df.withColumn("is_short_friday", (col("day_of_week") == "Friday"))
 
 # כתיבה לטבלת Iceberg
-df.writeTo("my_catalog.silver_dim_time").createOrReplace()
+if not spark.catalog.tableExists("my_catalog.silver_dim_time"):
+    df.writeTo("my_catalog.silver_dim_time").createOrReplace()
+else:
+    df.writeTo("my_catalog.silver_dim_time").append()

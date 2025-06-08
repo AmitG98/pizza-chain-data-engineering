@@ -34,4 +34,7 @@ df = spark.createDataFrame(data, schema=schema) \
           .withColumn("end_date", to_date("end_date"))
 
 # כתיבה כטבלת Iceberg עם תמיכה ב-SCD2
-df.writeTo("my_catalog.silver_dim_store").createOrReplace()
+if not spark.catalog.tableExists("my_catalog.silver_dim_store"):
+    df.writeTo("my_catalog.silver_dim_store").createOrReplace()
+else:
+    df.writeTo("my_catalog.silver_dim_store").append()

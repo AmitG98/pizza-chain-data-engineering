@@ -1,0 +1,114 @@
+version: "3.8"
+
+services:
+  spark-gold-delivery-metrics:
+    container_name: spark-gold-delivery-metrics
+    build:
+      context: ../..
+      dockerfile: app/spark_silver_to_gold/Dockerfile
+    command: >
+      spark-submit
+      --conf spark.sql.catalog.my_catalog=org.apache.iceberg.spark.SparkCatalog
+      --conf spark.sql.catalog.my_catalog.type=hadoop
+      --conf spark.sql.catalog.my_catalog.warehouse=s3a://warehouse
+      --conf spark.hadoop.fs.s3a.access.key=minioadmin
+      --conf spark.hadoop.fs.s3a.secret.key=minioadmin
+      --conf spark.hadoop.fs.s3a.endpoint=http://minio:9000
+      --conf spark.hadoop.fs.s3a.path.style.access=true
+      delivery_metrics_by_region.py
+    networks:
+      - data-net
+
+  spark-gold-complaints-by-type:
+    container_name: spark-gold-complaints-by-type
+    build:
+      context: ../..
+      dockerfile: app/spark_silver_to_gold/Dockerfile
+    command: >
+      spark-submit
+      --conf spark.sql.catalog.my_catalog=org.apache.iceberg.spark.SparkCatalog
+      --conf spark.sql.catalog.my_catalog.type=hadoop
+      --conf spark.sql.catalog.my_catalog.warehouse=s3a://warehouse
+      --conf spark.hadoop.fs.s3a.access.key=minioadmin
+      --conf spark.hadoop.fs.s3a.secret.key=minioadmin
+      --conf spark.hadoop.fs.s3a.endpoint=http://minio:9000
+      --conf spark.hadoop.fs.s3a.path.style.access=true
+      complaints_by_type.py
+    networks:
+      - data-net
+
+  spark-gold-delivery-summary-daily:
+    container_name: spark-gold-delivery-summary-daily
+    build:
+      context: ../..
+      dockerfile: app/spark_silver_to_gold/Dockerfile
+    command: >
+      spark-submit
+      --conf spark.sql.catalog.my_catalog=org.apache.iceberg.spark.SparkCatalog
+      --conf spark.sql.catalog.my_catalog.type=hadoop
+      --conf spark.sql.catalog.my_catalog.warehouse=s3a://warehouse
+      --conf spark.hadoop.fs.s3a.access.key=minioadmin
+      --conf spark.hadoop.fs.s3a.secret.key=minioadmin
+      --conf spark.hadoop.fs.s3a.endpoint=http://minio:9000
+      --conf spark.hadoop.fs.s3a.path.style.access=true
+      delivery_summary_daily.py
+    networks:
+      - data-net
+
+  spark-gold-peak-hours-analysis:
+    container_name: spark-gold-peak-hours-analysis
+    build:
+      context: ../..
+      dockerfile: app/spark_silver_to_gold/Dockerfile
+    command: >
+      spark-submit
+      --conf spark.sql.catalog.my_catalog=org.apache.iceberg.spark.SparkCatalog
+      --conf spark.sql.catalog.my_catalog.type=hadoop
+      --conf spark.sql.catalog.my_catalog.warehouse=s3a://warehouse
+      --conf spark.hadoop.fs.s3a.access.key=minioadmin
+      --conf spark.hadoop.fs.s3a.secret.key=minioadmin
+      --conf spark.hadoop.fs.s3a.endpoint=http://minio:9000
+      --conf spark.hadoop.fs.s3a.path.style.access=true
+      peak_hours_analysis.py
+    networks:
+      - data-net
+
+  spark-gold-weather-impact-summary:
+    container_name: spark-gold-weather-impact-summary
+    build:
+      context: ../..
+      dockerfile: app/spark_silver_to_gold/Dockerfile
+    command: >
+      spark-submit
+      --conf spark.sql.catalog.my_catalog=org.apache.iceberg.spark.SparkCatalog
+      --conf spark.sql.catalog.my_catalog.type=hadoop
+      --conf spark.sql.catalog.my_catalog.warehouse=s3a://warehouse
+      --conf spark.hadoop.fs.s3a.access.key=minioadmin
+      --conf spark.hadoop.fs.s3a.secret.key=minioadmin
+      --conf spark.hadoop.fs.s3a.endpoint=http://minio:9000
+      --conf spark.hadoop.fs.s3a.path.style.access=true
+      weather_impact_summary.py
+    networks:
+      - data-net
+
+  spark-gold-store-performance:
+    container_name: spark-gold-store-performance
+    build:
+      context: ../..
+      dockerfile: app/spark_silver_to_gold/Dockerfile
+    command: >
+      spark-submit
+      --conf spark.sql.catalog.my_catalog=org.apache.iceberg.spark.SparkCatalog
+      --conf spark.sql.catalog.my_catalog.type=hadoop
+      --conf spark.sql.catalog.my_catalog.warehouse=s3a://warehouse
+      --conf spark.hadoop.fs.s3a.access.key=minioadmin
+      --conf spark.hadoop.fs.s3a.secret.key=minioadmin
+      --conf spark.hadoop.fs.s3a.endpoint=http://minio:9000
+      --conf spark.hadoop.fs.s3a.path.style.access=true
+      store_performance.py
+    networks:
+      - data-net
+
+networks:
+  data-net:
+    external: true
