@@ -1,12 +1,10 @@
-version: "3.8"
-
-services: 
-  spark-silver-orders:
-    container_name: spark-silver-orders
+services:
+  spark-quality-check:
+    container_name: spark-quality-orders
     build: .
     command: >
       spark-submit
-      --packages org.apache.spark:spark-sql-kafka-0-10_2.12:3.5.1
+      --packages org.apache.iceberg:iceberg-spark-runtime-3.5_2.12:1.4.2
       --conf spark.sql.catalog.my_catalog=org.apache.iceberg.spark.SparkCatalog
       --conf spark.sql.catalog.my_catalog.type=hadoop
       --conf spark.sql.catalog.my_catalog.warehouse=s3a://warehouse
@@ -14,16 +12,16 @@ services:
       --conf spark.hadoop.fs.s3a.secret.key=minioadmin
       --conf spark.hadoop.fs.s3a.endpoint=http://minio:9000
       --conf spark.hadoop.fs.s3a.path.style.access=true
-      bronze_to_silver_orders.py
+      orders_quality_check.py
     networks:
       - data-net
 
-  spark-silver-complaints:
-    container_name: spark-silver-complaints
+  spark-quality-complaints:
+    container_name: spark-quality-complaints
     build: .
     command: >
       spark-submit
-      --packages org.apache.spark:spark-sql-kafka-0-10_2.12:3.5.1
+      --packages org.apache.iceberg:iceberg-spark-runtime-3.5_2.12:1.4.2
       --conf spark.sql.catalog.my_catalog=org.apache.iceberg.spark.SparkCatalog
       --conf spark.sql.catalog.my_catalog.type=hadoop
       --conf spark.sql.catalog.my_catalog.warehouse=s3a://warehouse
@@ -31,16 +29,16 @@ services:
       --conf spark.hadoop.fs.s3a.secret.key=minioadmin
       --conf spark.hadoop.fs.s3a.endpoint=http://minio:9000
       --conf spark.hadoop.fs.s3a.path.style.access=true
-      spark_bronze_to_silver/bronze_to_silver_complaints.py
+      complaints_quality_check.py
     networks:
       - data-net
 
-  spark-silver-weather:
-    container_name: spark-silver-weather
+  spark-quality-weather:
+    container_name: spark-quality-weather
     build: .
     command: >
       spark-submit
-      --packages org.apache.spark:spark-sql-kafka-0-10_2.12:3.5.1
+      --packages org.apache.iceberg:iceberg-spark-runtime-3.5_2.12:1.4.2
       --conf spark.sql.catalog.my_catalog=org.apache.iceberg.spark.SparkCatalog
       --conf spark.sql.catalog.my_catalog.type=hadoop
       --conf spark.sql.catalog.my_catalog.warehouse=s3a://warehouse
@@ -48,16 +46,16 @@ services:
       --conf spark.hadoop.fs.s3a.secret.key=minioadmin
       --conf spark.hadoop.fs.s3a.endpoint=http://minio:9000
       --conf spark.hadoop.fs.s3a.path.style.access=true
-      spark_bronze_to_silver/bronze_to_silver_weather.py
+      weather_quality_check.py
     networks:
       - data-net
 
-  spark-silver-deliveries:
-    container_name: spark-silver-deliveries
+  spark-quality-deliveries:
+    container_name: spark-quality-deliveries
     build: .
     command: >
       spark-submit
-      --packages org.apache.spark:spark-sql-kafka-0-10_2.12:3.5.1
+      --packages org.apache.iceberg:iceberg-spark-runtime-3.5_2.12:1.4.2
       --conf spark.sql.catalog.my_catalog=org.apache.iceberg.spark.SparkCatalog
       --conf spark.sql.catalog.my_catalog.type=hadoop
       --conf spark.sql.catalog.my_catalog.warehouse=s3a://warehouse
@@ -65,15 +63,16 @@ services:
       --conf spark.hadoop.fs.s3a.secret.key=minioadmin
       --conf spark.hadoop.fs.s3a.endpoint=http://minio:9000
       --conf spark.hadoop.fs.s3a.path.style.access=true
-      spark_bronze_to_silver/bronze_to_silver_deliveries.py
+      deliveries_quality_check.py
     networks:
       - data-net
 
-  spark-silver-dim-time:
-    container_name: spark-silver-dim-time
+  spark-quality-dim-time:
+    container_name: spark-quality-dim-time
     build: .
     command: >
       spark-submit
+      --packages org.apache.iceberg:iceberg-spark-runtime-3.5_2.12:1.4.2
       --conf spark.sql.catalog.my_catalog=org.apache.iceberg.spark.SparkCatalog
       --conf spark.sql.catalog.my_catalog.type=hadoop
       --conf spark.sql.catalog.my_catalog.warehouse=s3a://warehouse
@@ -81,15 +80,16 @@ services:
       --conf spark.hadoop.fs.s3a.secret.key=minioadmin
       --conf spark.hadoop.fs.s3a.endpoint=http://minio:9000
       --conf spark.hadoop.fs.s3a.path.style.access=true
-      spark_bronze_to_silver/generate_silver_dim_time.py
+      dim_time_quality_check.py
     networks:
       - data-net
 
-  spark-silver-dim-store:
-    container_name: spark-silver-dim-store
+  spark-quality-dim-store:
+    container_name: spark-quality-dim-store
     build: .
     command: >
       spark-submit
+      --packages org.apache.iceberg:iceberg-spark-runtime-3.5_2.12:1.4.2
       --conf spark.sql.catalog.my_catalog=org.apache.iceberg.spark.SparkCatalog
       --conf spark.sql.catalog.my_catalog.type=hadoop
       --conf spark.sql.catalog.my_catalog.warehouse=s3a://warehouse
@@ -97,12 +97,11 @@ services:
       --conf spark.hadoop.fs.s3a.secret.key=minioadmin
       --conf spark.hadoop.fs.s3a.endpoint=http://minio:9000
       --conf spark.hadoop.fs.s3a.path.style.access=true
-      spark_bronze_to_silver/silver_dim_store.py
+      dim_store_quality_check.py
     networks:
       - data-net
+
 
 networks:
   data-net:
     external: true
-
-  

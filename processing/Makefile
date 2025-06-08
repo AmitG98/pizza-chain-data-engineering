@@ -89,3 +89,34 @@ gold-weather-impact:
 gold-store-performance:
 	@echo ">>> Running Gold Store Performance Job..."
 	docker compose -f app/spark_silver_to_gold/docker-compose.yml up --build --abort-on-container-exit --exit-code-from spark-gold-store-performance
+
+# ----------------------------
+# Run Data quality check
+# ----------------------------
+quality-orders:
+	@echo ">>> Running Data Quality Checks for Orders..."
+	docker compose -f app/data_quality/docker-compose.yml run --rm spark-quality-check
+
+quality-complaints:
+	@echo ">>> Running Data Quality Checks for Complaints..."
+	docker compose -f app/data_quality/docker-compose.yml run --rm spark-quality-complaints
+
+quality-weather:
+	@echo ">>> Running Data Quality Checks for Weather..."
+	docker compose -f app/data_quality/docker-compose.yml run --rm spark-quality-weather
+
+quality-deliveries:
+	@echo ">>> Running Data Quality Checks for deliveries..."
+	docker compose -f app/data_quality/docker-compose.yml run --rm spark-quality-deliveries
+
+quality-dim-time:
+	@echo ">>> Running Data Quality Checks for dim-time..."
+	docker compose -f app/data_quality/docker-compose.yml run --rm spark-quality-dim-time
+
+quality-dim-store:
+	@echo ">>> Running Data Quality Checks for dim-store..."
+	docker compose -f app/data_quality/docker-compose.yml run --rm spark-quality-dim-store
+
+quality-all: quality-orders quality-complaints
+	@echo ">>> All Quality Checks Completed"
+
