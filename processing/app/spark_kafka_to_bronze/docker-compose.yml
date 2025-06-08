@@ -3,7 +3,9 @@ version: '3.8'
 services:
   spark-orders-bronze:
     container_name: spark-orders-bronze
-    build: .
+    build:
+      context: ../..
+      dockerfile: app/spark_kafka_to_bronze/Dockerfile
     command: >
       spark-submit
       --packages org.apache.spark:spark-sql-kafka-0-10_2.12:3.5.1
@@ -22,7 +24,9 @@ services:
 
   spark-weather-bronze:
     container_name: spark-weather-bronze
-    build: .
+    build:
+      context: ../..
+      dockerfile: app/spark_kafka_to_bronze/Dockerfile
     command: >
       spark-submit
       --packages org.apache.spark:spark-sql-kafka-0-10_2.12:3.5.1
@@ -41,7 +45,9 @@ services:
 
   spark-complaints-bronze:
     container_name: spark-complaints-bronze
-    build: .
+    build:
+      context: ../..
+      dockerfile: app/spark_kafka_to_bronze/Dockerfile
     command: >
       spark-submit
       --packages org.apache.spark:spark-sql-kafka-0-10_2.12:3.5.1

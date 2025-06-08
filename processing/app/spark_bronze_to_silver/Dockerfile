@@ -1,7 +1,7 @@
 FROM bitnami/spark:latest
 
 # Copy Iceberg JAR
-COPY jars/iceberg-spark-runtime-3.5_2.12-1.4.3.jar /opt/bitnami/spark/jars/
+COPY jars/iceberg-spark-runtime-4.0_2.12-1.5.0.jar /opt/bitnami/spark/jars/
 
 # Copy all Spark apps for Bronze to Silver
 COPY bronze_to_silver_orders.py /opt/bitnami/spark/app/

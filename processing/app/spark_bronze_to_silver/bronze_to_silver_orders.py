@@ -16,6 +16,8 @@ spark = SparkSession.builder \
 # Load Bronze table
 df = spark.read.format("iceberg").load("my_catalog.orders_bronze")
 
+df = df.withColumnRenamed("timestamp", "order_time")
+
 # Add delivery_delay in minutes
 df = df.withColumn("delivery_delay",
     (unix_timestamp("actual_delivery_time") - unix_timestamp("estimated_delivery_time")) / 60
