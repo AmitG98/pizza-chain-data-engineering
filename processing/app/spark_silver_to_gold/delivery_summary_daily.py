@@ -31,7 +31,7 @@ weather_df = weather_df.withColumn("date", to_date("order_time"))
 
 # ניקח את weather_summary הראשון באותו יום
 weather_summary_df = weather_df.groupBy("date").agg(
-    first("weather_summary").alias("weather_summary")
+    first("weather_condition", ignorenulls=True).alias("weather_summary")
 )
 
 # חיבור שני הנתונים
