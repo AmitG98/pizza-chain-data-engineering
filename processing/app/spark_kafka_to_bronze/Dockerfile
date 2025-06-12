@@ -12,6 +12,3 @@ COPY spark_kafka_to_bronze_complaints.py /opt/bitnami/spark/app/
 COPY spark_kafka_to_bronze_weather.py /opt/bitnami/spark/app/
 
 WORKDIR /opt/bitnami/spark/app/
-
-# שורה זו כבר לא דרושה כי ה־command מוגדר ב־docker-compose.yml
-# CMD ["spark-submit", "spark_kafka_to_bronze_orders.py"]

@@ -15,7 +15,7 @@ with DAG('silver_quality_checks',
 
     check_orders = DockerOperator(
         task_id='check_silver_orders',
-        image='data_quality-spark-quality-orders',
+        image='data_quality-spark-quality-check',
         auto_remove=True,
         command="spark-submit /opt/bitnami/spark/app/orders_quality_check.py",
         docker_url='unix://var/run/docker.sock',
