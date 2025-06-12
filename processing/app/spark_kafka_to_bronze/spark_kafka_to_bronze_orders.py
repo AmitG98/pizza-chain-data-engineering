@@ -46,16 +46,9 @@ df = spark.read \
     .format("kafka") \
     .option("kafka.bootstrap.servers", "kafka:9092") \
     .option("subscribe", "orders-topic") \
-    .option("startingOffsets", "latest") \
+    .option("startingOffsets", "earliest") \
     .option("endingOffsets", "latest") \
     .load()
-
-# df = spark.readStream \
-#     .format("kafka") \
-#     .option("kafka.bootstrap.servers", "kafka:9092") \
-#     .option("subscribe", "orders-topic") \
-#     .option("startingOffsets", "earliest") \
-#     .load()
 
 parsed = df.selectExpr("CAST(value AS STRING) as json_string") \
     .select(from_json("json_string", order_schema).alias("data")) \

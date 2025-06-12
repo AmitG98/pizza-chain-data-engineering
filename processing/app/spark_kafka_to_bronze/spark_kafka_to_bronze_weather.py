@@ -1,7 +1,8 @@
 from pyspark.sql import SparkSession
-from pyspark.sql.functions import from_json, col
+from pyspark.sql.functions import from_json, col, expr
 from pyspark.sql.types import StructType, IntegerType, StringType, DoubleType, TimestampType
 
+# Schema
 schema = StructType() \
     .add("location", StringType()) \
     .add("timestamp", TimestampType()) \
@@ -10,6 +11,7 @@ schema = StructType() \
     .add("wind_speed", DoubleType()) \
     .add("weather_condition", StringType())
 
+# SparkSession
 spark = SparkSession.builder \
     .appName("KafkaToBronzeWeather") \
     .config("spark.sql.catalog.my_catalog", "org.apache.iceberg.spark.SparkCatalog") \
@@ -21,6 +23,7 @@ spark = SparkSession.builder \
     .config("spark.hadoop.fs.s3a.path.style.access", "true") \
     .getOrCreate()
 
+# Create Iceberg table if needed
 spark.sql("""
 CREATE TABLE IF NOT EXISTS my_catalog.weather_bronze (
     location STRING,
@@ -33,23 +36,24 @@ CREATE TABLE IF NOT EXISTS my_catalog.weather_bronze (
 USING iceberg
 """)
 
-df = spark.readStream \
+# Batch read from Kafka
+df = spark.read \
     .format("kafka") \
     .option("kafka.bootstrap.servers", "kafka:9092") \
     .option("subscribe", "weather-api-topic") \
     .option("startingOffsets", "earliest") \
+    .option("endingOffsets", "latest") \
     .load()
 
+# Parse Kafka JSON
 parsed = df.selectExpr("CAST(value AS STRING) as json_string") \
     .select(from_json("json_string", schema).alias("data")) \
     .select("data.*")
 
-query = parsed.writeStream \
-    .format("iceberg") \
-    .outputMode("append") \
-    .option("checkpointLocation", "/tmp/checkpoints/weather_bronze") \
-    .toTable("my_catalog.weather_bronze")
+# Optional: Filter last 48h
+filtered = parsed.filter(
+    col("timestamp") >= expr("current_timestamp() - interval 48 hours")
+)
 
-query.awaitTermination()
-
-
+# Write to Iceberg
+filtered.writeTo("my_catalog.weather_bronze").append()
