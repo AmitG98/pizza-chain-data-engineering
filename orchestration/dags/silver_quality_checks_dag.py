@@ -1,0 +1,71 @@
+from airflow import DAG
+from airflow.providers.docker.operators.docker import DockerOperator
+from datetime import datetime
+
+default_args = {
+    'start_date': datetime(2025, 6, 1),
+    'retries': 1,
+}
+
+with DAG('silver_quality_checks',
+         default_args=default_args,
+         schedule_interval='@daily',
+         catchup=False,
+         tags=['quality', 'silver']) as dag:
+
+    check_orders = DockerOperator(
+        task_id='check_silver_orders',
+        image='data_quality-spark-quality-orders',
+        auto_remove=True,
+        command="spark-submit /opt/bitnami/spark/app/orders_quality_check.py",
+        docker_url='unix://var/run/docker.sock',
+        network_mode='data-net',
+    )
+
+    check_complaints = DockerOperator(
+        task_id='check_silver_complaints',
+        image='data_quality-spark-quality-complaints',
+        auto_remove=True,
+        command="spark-submit /opt/bitnami/spark/app/complaints_quality_check.py",
+        docker_url='unix://var/run/docker.sock',
+        network_mode='data-net',
+    )
+
+    check_weather = DockerOperator(
+        task_id='check_silver_weather',
+        image='data_quality-spark-quality-weather',
+        auto_remove=True,
+        command="spark-submit /opt/bitnami/spark/app/weather_quality_check.py",
+        docker_url='unix://var/run/docker.sock',
+        network_mode='data-net',
+    )
+
+    check_dim_time = DockerOperator(
+        task_id='check_silver_dim_time',
+        image='data_quality-spark-quality-dim-time',
+        auto_remove=True,
+        command="spark-submit /opt/bitnami/spark/app/dim_time_quality_check.py",
+        docker_url='unix://var/run/docker.sock',
+        network_mode='data-net',
+    )
+
+    check_dim_store = DockerOperator(
+        task_id='check_silver_dim_store',
+        image='data_quality-spark-quality-dim-store',
+        auto_remove=True,
+        command="spark-submit /opt/bitnami/spark/app/dim_store_quality_check.py",
+        docker_url='unix://var/run/docker.sock',
+        network_mode='data-net',
+    )
+
+    check_deliveries = DockerOperator(
+        task_id='check_silver_deliveries',
+        image='data_quality-spark-quality-deliveries',
+        auto_remove=True,
+        command="spark-submit /opt/bitnami/spark/app/deliveries_quality_check.py",
+        docker_url='unix://var/run/docker.sock',
+        network_mode='data-net',
+    )
+
+    # Execution order: everything after orders
+    check_orders >> [check_complaints, check_weather, check_dim_time, check_dim_store] >> check_deliveries
