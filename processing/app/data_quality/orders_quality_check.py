@@ -1,5 +1,5 @@
 from pyspark.sql import SparkSession
-from pyspark.sql.functions import col
+from pyspark.sql.functions import col, lit
 import sys
 
 # Start Spark Session
@@ -14,12 +14,13 @@ spark = SparkSession.builder \
     .config("spark.hadoop.fs.s3a.path.style.access", "true") \
     .getOrCreate()
 
-# Use Spark logger
+# Logger
 logger = spark._jvm.org.apache.log4j.LogManager.getLogger("DataQualityCheck")
 spark.sparkContext.setLogLevel("INFO")
 
 logger.info("=== Starting Data Quality Check for silver_orders_clean ===")
 
+# Load table
 try:
     df = spark.read.format("iceberg").load("my_catalog.silver_orders_clean")
     logger.info("Table loaded successfully.")
@@ -30,33 +31,39 @@ except Exception as e:
 logger.info("Schema: " + str(df.schema))
 df.show(5)
 
-# Null checks
-null_customer_id = df.filter(col("customer_id").isNull()).count()
-logger.info(f"Null customer_id: {null_customer_id}")
+# Individual Checks
+issues = []
 
-# Range check
-invalid_delay = df.filter((col("delivery_delay") < 0) | (col("delivery_delay") > 300)).count()
-logger.info(f"Invalid delivery_delay (not in [0-300]): {invalid_delay}")
+null_customer_id_df = df.filter(col("customer_id").isNull()).withColumn("issue", lit("null_customer_id"))
+if null_customer_id_df.count() > 0:
+    logger.warn(f"Null customer_id: {null_customer_id_df.count()}")
+    issues.append(null_customer_id_df)
 
-# Enum check for status
-allowed_statuses = ["delivered", "delayed", "canceled"]
-invalid_status = df.filter(~col("status").isin(allowed_statuses)).count()
-logger.info(f"Invalid status values: {invalid_status}")
+invalid_delay_df = df.filter((col("delivery_delay") < 0) | (col("delivery_delay") > 300)).withColumn("issue", lit("invalid_delivery_delay"))
+if invalid_delay_df.count() > 0:
+    logger.warn(f"Invalid delivery_delay (not in [0-300]): {invalid_delay_df.count()}")
+    issues.append(invalid_delay_df)
 
-# Duplicate check
-duplicate_orders = df.groupBy("order_id").count().filter("count > 1").count()
-logger.info(f"Duplicate order_id: {duplicate_orders}")
+duplicate_orders_df = df.groupBy("order_id").count().filter("count > 1")
+if duplicate_orders_df.count() > 0:
+    logger.warn(f"Duplicate order_id: {duplicate_orders_df.count()}")
+    duplicate_ids = [row['order_id'] for row in duplicate_orders_df.collect()]
+    duplicate_df = df.filter(col("order_id").isin(duplicate_ids)).withColumn("issue", lit("duplicate_order_id"))
+    issues.append(duplicate_df)
 
-# Null primary key
-null_order_id = df.filter(col("order_id").isNull()).count()
-logger.info(f"Null order_id: {null_order_id}")
+null_order_id_df = df.filter(col("order_id").isNull()).withColumn("issue", lit("null_order_id"))
+if null_order_id_df.count() > 0:
+    logger.warn(f"Null order_id: {null_order_id_df.count()}")
+    issues.append(null_order_id_df)
 
-# Total issues
-total_issues = sum([null_customer_id, invalid_delay, invalid_status, duplicate_orders, null_order_id])
-logger.info(f"Total issues found: {total_issues}")
+# Combine all issues
+if issues:
+    final_issues_df = issues[0]
+    for other in issues[1:]:
+        final_issues_df = final_issues_df.unionByName(other)
 
-if total_issues > 0:
-    logger.error("Data quality check failed.")
+    final_issues_df.writeTo("my_catalog.silver_orders_clean_quality_issues").createOrReplace()
+    logger.error("Data quality check failed. Issues saved to silver_orders_clean_quality_issues.")
     sys.exit(1)
 else:
     logger.info("All checks passed.")

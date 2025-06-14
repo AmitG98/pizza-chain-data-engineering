@@ -49,11 +49,11 @@ with DAG('silver_quality_checks',
         network_mode='data-net',
     )
 
-    check_dim_store = DockerOperator(
-        task_id='check_silver_dim_store',
-        image='data_quality-spark-quality-dim-store',
+    check_order_status = DockerOperator(
+        task_id='check_silver_order_status',
+        image='data_quality-spark-quality-order-status',
         auto_remove=True,
-        command="spark-submit /opt/bitnami/spark/app/dim_store_quality_check.py",
+        command="spark-submit /opt/bitnami/spark/app/dim_order_status_quality_check.py",
         docker_url='unix://var/run/docker.sock',
         network_mode='data-net',
     )

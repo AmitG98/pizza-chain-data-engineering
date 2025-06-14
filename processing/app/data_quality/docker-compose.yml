@@ -80,8 +80,8 @@ services:
     networks:
       - data-net
 
-  spark-quality-dim-store:
-    container_name: spark-quality-dim-store
+  spark-quality-dim-order-status:
+    container_name: spark-quality-dim-order-status
     build: .
     command: >
       spark-submit
@@ -92,7 +92,7 @@ services:
       --conf spark.hadoop.fs.s3a.secret.key=minioadmin
       --conf spark.hadoop.fs.s3a.endpoint=http://minio:9000
       --conf spark.hadoop.fs.s3a.path.style.access=true
-      dim_store_quality_check.py
+      dim_order_status_quality_check.py
     networks:
       - data-net
 

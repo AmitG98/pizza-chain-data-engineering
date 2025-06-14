@@ -112,9 +112,9 @@ silver-dim-time:
 	@echo ">>> Running Silver Dim Time Job..."
 	docker compose -f processing/app/spark_bronze_to_silver/docker-compose.yml run spark-silver-dim-time spark-submit /opt/bitnami/spark/app/generate_silver_dim_time.py
 
-silver-dim-store:
-	@echo ">>> Running Silver Dim Store Job..."
-	docker compose -f processing/app/spark_bronze_to_silver/docker-compose.yml run spark-silver-dim-store spark-submit /opt/bitnami/spark/app/silver_dim_store.py
+silver-dim-order-status:
+	@echo ">>> Running Silver Dim Order Status Job..."
+	docker compose -f processing/app/spark_bronze_to_silver/docker-compose.yml run spark-silver-dim-store spark-submit /opt/bitnami/spark/app/silver_dim_order_status.py
 
 # ----------------------------
 # Run Gold Layer Jobs
@@ -155,6 +155,25 @@ gold-weather-impact:
 gold-store-performance:
 	@echo ">>> Running Gold Store Performance Job..."
 	docker compose -f processing/app/spark_silver_to_gold/docker-compose.yml up --build --abort-on-container-exit --exit-code-from spark-gold-store-performance
+
+# ----------------------------
+# Stop All Spark Jobs (Bronze, Silver, Gold)
+# ----------------------------
+
+spark-down-all: spark-down-bronze spark-down-silver spark-down-gold
+	@echo ">>> All Spark jobs have been stopped and removed."
+
+spark-down-bronze:
+	@echo ">>> Stopping Bronze Spark jobs..."
+	docker compose -f processing/app/spark_kafka_to_bronze/docker-compose.yml down
+
+spark-down-silver:
+	@echo ">>> Stopping Silver Spark jobs..."
+	docker compose -f processing/app/spark_bronze_to_silver/docker-compose.yml down
+
+spark-down-gold:
+	@echo ">>> Stopping Gold Spark jobs..."
+	docker compose -f processing/app/spark_silver_to_gold/docker-compose.yml down
 
 # ----------------------------
 # Run Data Quality Checks

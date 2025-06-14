@@ -37,7 +37,7 @@ CREATE TABLE IF NOT EXISTS my_catalog.silver_orders_clean (
   estimated_delivery_time TIMESTAMP,
   actual_delivery_time TIMESTAMP,
   delivery_delay DOUBLE,
-  status STRING
+  status STRING,
   ingestion_time TIMESTAMP
 )
 USING iceberg
