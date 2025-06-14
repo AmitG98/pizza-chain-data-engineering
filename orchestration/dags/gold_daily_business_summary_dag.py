@@ -8,8 +8,7 @@ default_args = {
 
 with DAG('gold_daily_business_summary',
          default_args=default_args,
-         schedule_interval='None',
-         start_date=datetime(2025, 6, 1),
+         schedule_interval=None,
          catchup=False,
          is_paused_upon_creation=True,
          tags=['gold', 'summary']) as dag:
