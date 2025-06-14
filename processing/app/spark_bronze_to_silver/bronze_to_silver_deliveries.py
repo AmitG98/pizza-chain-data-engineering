@@ -1,5 +1,5 @@
 from pyspark.sql import SparkSession
-from pyspark.sql.functions import col, when, isnan
+from pyspark.sql.functions import col, when, isnan, current_timestamp
 
 # Start Spark session
 spark = SparkSession.builder \
@@ -54,14 +54,16 @@ final_df = final_df.filter(
 
 # Remove duplicates (safety net)
 final_df = final_df.dropDuplicates(["order_id"])
+final_df = final_df.withColumn("ingestion_time", current_timestamp())
 
 # Select and reorder columns
 columns = [
     "order_id", "customer_id", "store_id", "delivery_address", "order_time",
-    "estimated_delivery_time", "actual_delivery_time", "delivery_delay",
+    "estimated_delivery_time", "actual_delivery_time", "delivery_delay", "status",
     "complaint_type", "had_complaint", "temperature", "precipitation",
-    "wind_speed", "weather_condition", "delay_category"
+    "wind_speed", "weather_condition", "delay_category", "ingestion_time"
 ]
+
 final_df = final_df.select(*columns)
 
 # Write to Iceberg table

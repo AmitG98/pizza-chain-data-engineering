@@ -11,6 +11,7 @@ with DAG('gold_complaints_by_type',
          default_args=default_args,
          schedule_interval=None,
          catchup=False,
+         is_paused_upon_creation=True,
          tags=['gold', 'complaints']) as dag:
 
     run_gold_complaints_by_type = DockerOperator(

@@ -1,5 +1,5 @@
 from pyspark.sql import SparkSession
-from pyspark.sql.functions import col, trim
+from pyspark.sql.functions import col, trim, current_timestamp
 
 # Start SparkSession
 spark = SparkSession.builder \
@@ -15,6 +15,7 @@ spark = SparkSession.builder \
 
 # Load Bronze table
 df = spark.read.format("iceberg").load("my_catalog.complaints_bronze")
+df = df.withColumn("ingestion_time", current_timestamp())
 
 # Clean data
 df_clean = df \

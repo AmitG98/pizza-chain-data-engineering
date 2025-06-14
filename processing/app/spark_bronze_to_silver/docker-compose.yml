@@ -18,6 +18,23 @@ services:
     networks:
       - data-net
 
+  spark-silver-order-events:
+    container_name: spark-silver-order-events
+    build: .
+    command: >
+      spark-submit
+      --packages org.apache.spark:spark-sql-kafka-0-10_2.12:3.5.1
+      --conf spark.sql.catalog.my_catalog=org.apache.iceberg.spark.SparkCatalog
+      --conf spark.sql.catalog.my_catalog.type=hadoop
+      --conf spark.sql.catalog.my_catalog.warehouse=s3a://warehouse
+      --conf spark.hadoop.fs.s3a.access.key=minioadmin
+      --conf spark.hadoop.fs.s3a.secret.key=minioadmin
+      --conf spark.hadoop.fs.s3a.endpoint=http://minio:9000
+      --conf spark.hadoop.fs.s3a.path.style.access=true
+      spark_bronze_to_silver/bronze_to_silver_order_events.py
+    networks:
+      - data-net
+
   spark-silver-complaints:
     container_name: spark-silver-complaints
     build: .

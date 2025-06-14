@@ -109,6 +109,25 @@ services:
     networks:
       - data-net
 
+  spark-gold-daily-business-summary:
+    container_name: spark-gold-daily-business-summary
+    build:
+      context: ../..
+      dockerfile: app/spark_silver_to_gold/Dockerfile
+    command: >
+      spark-submit
+      --conf spark.sql.catalog.my_catalog=org.apache.iceberg.spark.SparkCatalog
+      --conf spark.sql.catalog.my_catalog.type=hadoop
+      --conf spark.sql.catalog.my_catalog.warehouse=s3a://warehouse
+      --conf spark.hadoop.fs.s3a.access.key=minioadmin
+      --conf spark.hadoop.fs.s3a.secret.key=minioadmin
+      --conf spark.hadoop.fs.s3a.endpoint=http://minio:9000
+      --conf spark.hadoop.fs.s3a.path.style.access=true
+      daily_business_summary.py
+    networks:
+      - data-net
+
+
 networks:
   data-net:
     external: true

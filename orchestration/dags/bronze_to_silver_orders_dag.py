@@ -3,7 +3,6 @@ from airflow.providers.docker.operators.docker import DockerOperator
 from datetime import datetime
 
 default_args = {
-    'start_date': datetime(2025, 6, 1),
     'retries': 1,
 }
 
@@ -11,6 +10,7 @@ with DAG('bronze_to_silver_orders',
          default_args=default_args,
          schedule_interval=None,
          catchup=False,
+         is_paused_upon_creation=True,
          tags=['silver', 'orders']) as dag:
 
     run_bronze_to_silver_orders = DockerOperator(

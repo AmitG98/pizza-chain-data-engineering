@@ -13,6 +13,7 @@ COPY app/spark_silver_to_gold/delivery_summary_daily.py /opt/bitnami/spark/app/
 COPY app/spark_silver_to_gold/peak_hours_analysis.py /opt/bitnami/spark/app/
 COPY app/spark_silver_to_gold/weather_impact_summary.py /opt/bitnami/spark/app/
 COPY app/spark_silver_to_gold/store_performance.py /opt/bitnami/spark/app/
+COPY app/spark_silver_to_gold/gold_daily_business_summary.py /opt/bitnami/spark/app/
 
 # תיקיית עבודה
 WORKDIR /opt/bitnami/spark/app/
