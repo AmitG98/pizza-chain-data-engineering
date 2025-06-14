@@ -16,12 +16,9 @@ spark = SparkSession.builder \
 # Load Silver tables
 deliveries_df = spark.read.format("iceberg").load("my_catalog.silver_deliveries_enriched")
 complaints_df = spark.read.format("iceberg").load("my_catalog.silver_complaints_clean")
-dim_store_df = spark.read.format("iceberg").load("my_catalog.silver_dim_store")  # required
 
-# Add region to deliveries via store_id
-deliveries_with_region = deliveries_df.join(
-    dim_store_df.select("store_id", "region"), on="store_id", how="left"
-)
+# Filter deliveries that have region
+deliveries_with_region = deliveries_df.filter(col("region").isNotNull())
 
 # Aggregate delivery stats per region
 delivery_stats = deliveries_with_region.groupBy("region").agg(

@@ -6,7 +6,6 @@
 # ----------------------------
 # Run MinIO
 # ----------------------------
-minio: minio-reset minio-up
 
 minio-reset:
 	@echo ">>> Resetting MinIO (Stopping and removing volumes)..."
@@ -169,21 +168,24 @@ gold-daily-business-summary:
 # Stop All Spark Jobs (Bronze, Silver, Gold)
 # ----------------------------
 
-spark-down-all: spark-down-bronze spark-down-silver spark-down-gold
+spark-down-all: spark-down-bronze spark-down-silver spark-down-gold spark-down-quality
 	@echo ">>> All Spark jobs have been stopped and removed."
 
 spark-down-bronze:
 	@echo ">>> Stopping Bronze Spark jobs..."
-	docker compose -f processing/app/spark_kafka_to_bronze/docker-compose.yml down
+	docker compose -f processing/app/spark_kafka_to_bronze/docker-compose.yml down -v
 
 spark-down-silver:
 	@echo ">>> Stopping Silver Spark jobs..."
-	docker compose -f processing/app/spark_bronze_to_silver/docker-compose.yml down
+	docker compose -f processing/app/spark_bronze_to_silver/docker-compose.yml down -v
 
 spark-down-gold:
 	@echo ">>> Stopping Gold Spark jobs..."
-	docker compose -f processing/app/spark_silver_to_gold/docker-compose.yml down
+	docker compose -f processing/app/spark_silver_to_gold/docker-compose.yml down -v
 
+spark-down-quality:
+	@echo ">>> Stopping Quality Spark jobs..."
+	docker compose -f processing/app/spark_silver_to_gold/docker-compose.yml down -v
 # ----------------------------
 # Run Data Quality Checks
 # ----------------------------

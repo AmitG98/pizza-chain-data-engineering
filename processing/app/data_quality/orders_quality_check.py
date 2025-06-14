@@ -56,6 +56,12 @@ if null_order_id_df.count() > 0:
     logger.warn(f"Null order_id: {null_order_id_df.count()}")
     issues.append(null_order_id_df)
 
+invalid_status_df = df.filter(~col("status").isin(["delivered", "delayed", "canceled"])) \
+    .withColumn("issue", lit("invalid_status"))
+if invalid_status_df.count() > 0:
+    logger.warn(f"Invalid status values: {invalid_status_df.count()}")
+    issues.append(invalid_status_df)
+
 # Combine all issues
 if issues:
     final_issues_df = issues[0]

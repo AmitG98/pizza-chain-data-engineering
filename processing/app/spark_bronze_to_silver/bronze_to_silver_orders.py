@@ -43,4 +43,7 @@ CREATE TABLE IF NOT EXISTS my_catalog.silver_orders_clean (
 USING iceberg
 """)
 
+# Drop timestamp column to match Iceberg table schema
+clean_df = clean_df.drop("timestamp")
+
 clean_df.writeTo("my_catalog.silver_orders_clean").append()

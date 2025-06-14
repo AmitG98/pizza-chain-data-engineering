@@ -32,7 +32,6 @@ def generate_order_base():
 def generate_order_events(order):
     order_time = datetime.fromisoformat(order["event_time"])
 
-    # שונות בין הזמנות
     prep_durations = {
         "simple": random.randint(5, 10),
         "medium": random.randint(10, 20),
@@ -52,7 +51,6 @@ def generate_order_events(order):
     prep_time = order_time + timedelta(minutes=prep_durations[order_type])
     out_for_delivery_time = prep_time + timedelta(minutes=delivery_durations[distance])
 
-    # לוודא שזמן המסירה אחרי זמן היציאה
     delivered_time = out_for_delivery_time + timedelta(minutes=max(5, random_delay))
 
     events = [
@@ -106,10 +104,8 @@ print("Producer is running and sending orders & events...")
 while True:
     order = generate_order_base()
 
-    # יצירת סדרת האיוונטים + חישוב זמן המסירה בפועל
     events, delivered_time = generate_order_events(order)
 
-    # נעדכן את ההזמנה עם זמן המסירה האמיתי
     order["actual_delivery_time"] = delivered_time.isoformat()
 
     print(f"Sending order: {order}")

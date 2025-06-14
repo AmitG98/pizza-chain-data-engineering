@@ -1,7 +1,7 @@
 from pyspark.sql import SparkSession
-from pyspark.sql.functions import col, count, avg, current_timestamp
+from pyspark.sql.functions import col, avg, count, when, current_timestamp, expr, trim
 
-# Create Spark session
+# Start Spark session
 spark = SparkSession.builder \
     .appName("GoldStorePerformance") \
     .config("spark.sql.catalog.my_catalog", "org.apache.iceberg.spark.SparkCatalog") \
@@ -16,22 +16,24 @@ spark = SparkSession.builder \
 # Load Silver tables
 deliveries_df = spark.read.format("iceberg").load("my_catalog.silver_deliveries_enriched")
 complaints_df = spark.read.format("iceberg").load("my_catalog.silver_complaints_clean")
-dim_store_df = spark.read.format("iceberg").load("my_catalog.silver_dim_store")
 
-# Join region from dim_store by store_id
-deliveries_with_region = deliveries_df.join(
-    dim_store_df.select("store_id", "region"), on="store_id", how="left"
+# Extract region from delivery_address
+deliveries_df = deliveries_df.withColumn(
+    "region",
+    when(expr("size(split(delivery_address, ',')) > 1"),
+         trim(expr("split(delivery_address, ',')[1]"))
+    ).otherwise(None)
 )
 
-# Delivery statistics by store_id and region
-delivery_stats = deliveries_with_region.groupBy("store_id", "region").agg(
+# Delivery stats by store and region
+delivery_stats = deliveries_df.groupBy("store_id", "region").agg(
     avg("delivery_delay").alias("avg_delay"),
     count("*").alias("orders_total")
 )
 
-# Join complaints to orders and enrich with store/region info
+# Join complaints with enriched delivery info
 complaints_with_info = complaints_df.join(
-    deliveries_with_region.select("order_id", "store_id", "region"),
+    deliveries_df.select("order_id", "store_id", "region"),
     on="order_id", how="inner"
 )
 
@@ -39,26 +41,17 @@ complaints_stats = complaints_with_info.groupBy("store_id", "region").agg(
     count("*").alias("complaints")
 )
 
-# Combine delivery and complaints stats
+# Merge stats and calculate complaint rate
 final_df = delivery_stats.join(complaints_stats, on=["store_id", "region"], how="left").fillna(0)
-
-# Calculate complaints rate
 final_df = final_df.withColumn("complaints_rate", col("complaints") / col("orders_total"))
-
-# Add ingestion timestamp
 final_df = final_df.withColumn("ingestion_time", current_timestamp())
 
-# Select final columns
+# Final columns
 final_df = final_df.select(
-    "store_id",
-    "region",
-    "avg_delay",
-    "orders_total",
-    "complaints_rate",
-    "ingestion_time"
+    "store_id", "region", "avg_delay", "orders_total", "complaints_rate", "ingestion_time"
 )
 
-# Write to GOLD table
+# Write to Gold table
 if not spark.catalog.tableExists("my_catalog.gold_store_performance"):
     final_df.writeTo("my_catalog.gold_store_performance").createOrReplace()
 else:

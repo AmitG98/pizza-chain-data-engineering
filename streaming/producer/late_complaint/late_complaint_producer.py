@@ -1,4 +1,3 @@
-# streaming/producer/late_complaint_producer.py
 from kafka import KafkaProducer
 import json
 import time
@@ -10,7 +9,7 @@ producer = KafkaProducer(
     value_serializer=lambda v: json.dumps(v).encode('utf-8')
 )
 
-order_ids = list(range(100000, 100500))  # הזמנות קיימות
+order_ids = list(range(100000, 100500))
 complaint_types = [
     ("Late delivery", "Order arrived more than 30 minutes late"),
     ("Wrong order", "Received a different pizza than ordered"),
@@ -20,7 +19,6 @@ complaint_types = [
 ]
 
 while True:
-    # הזמן שבו התלונה התקבלה – 1 עד 48 שעות אחורה
     timestamp_received = datetime.utcnow() - timedelta(hours=random.randint(1, 48))
     complaint_type, description = random.choice(complaint_types)
 

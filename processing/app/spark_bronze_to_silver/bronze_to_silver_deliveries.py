@@ -1,5 +1,5 @@
 from pyspark.sql import SparkSession
-from pyspark.sql.functions import col, when, isnan, current_timestamp
+from pyspark.sql.functions import col, when, current_timestamp
 
 # Start Spark session
 spark = SparkSession.builder \
@@ -27,7 +27,7 @@ orders_with_complaints = orders_df.join(
 
 # Join weather (left join)
 orders_with_weather = orders_with_complaints.join(
-    weather_df.drop("region", "order_time"),  # drop extra fields
+    weather_df.drop("order_time", "ingestion_time"),  # drop ingestion_time to avoid duplication
     on="order_id",
     how="left"
 )
@@ -37,7 +37,7 @@ final_df = orders_with_weather.withColumn(
     "had_complaint", when(col("complaint_type").isNotNull(), True).otherwise(False)
 )
 
-# Optionally categorize delivery delay
+# Categorize delay
 final_df = final_df.withColumn(
     "delay_category",
     when(col("delivery_delay") < 5, "on_time")
@@ -46,24 +46,23 @@ final_df = final_df.withColumn(
     .otherwise("extreme_delay")
 )
 
-# Filter bad or missing order_id
+# Filter bad orders
 final_df = final_df.filter(
-    col("order_id").isNotNull() &
-    (col("order_id") > 0)
+    col("order_id").isNotNull() & (col("order_id") > 0)
 )
 
-# Remove duplicates (safety net)
-final_df = final_df.dropDuplicates(["order_id"])
-final_df = final_df.withColumn("ingestion_time", current_timestamp())
+# Drop duplicates and reassign ingestion_time
+final_df = final_df.dropDuplicates(["order_id"]) \
+                   .drop("ingestion_time") \
+                   .withColumn("ingestion_time", current_timestamp())
 
 # Select and reorder columns
 columns = [
-    "order_id", "customer_id", "store_id", "delivery_address", "order_time",
+    "order_id", "customer_id", "store_id", "region", "delivery_address", "order_time",
     "estimated_delivery_time", "actual_delivery_time", "delivery_delay", "status",
     "complaint_type", "had_complaint", "temperature", "precipitation",
     "wind_speed", "weather_condition", "delay_category", "ingestion_time"
 ]
-
 final_df = final_df.select(*columns)
 
 # Write to Iceberg table
@@ -71,4 +70,3 @@ if not spark.catalog.tableExists("my_catalog.silver_deliveries_enriched"):
     final_df.writeTo("my_catalog.silver_deliveries_enriched").createOrReplace()
 else:
     final_df.writeTo("my_catalog.silver_deliveries_enriched").append()
-
