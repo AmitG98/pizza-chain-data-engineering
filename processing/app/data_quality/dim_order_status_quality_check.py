@@ -57,7 +57,11 @@ if total_issues > 0:
     logger.warning("Issues found. Creating cleaned table silver_order_status_scd2_valid")
     try:
         df_clean = df.dropna(subset=["order_id", "status", "effective_time", "ingestion_time", "is_current"])
-        df_clean.writeTo("my_catalog.silver_order_status_scd2_valid").createOrReplace()
+
+        if not spark.catalog.tableExists("my_catalog.silver_order_status_scd2_valid"):
+            df_clean.writeTo("my_catalog.silver_order_status_scd2_valid").create()
+        else:
+            df_clean.writeTo("my_catalog.silver_order_status_scd2_valid").append()
         logger.info("Cleaned table created successfully.")
     except Exception as e:
         logger.error(f"Failed to save cleaned table: {e}")

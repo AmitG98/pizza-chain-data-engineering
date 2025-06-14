@@ -66,7 +66,12 @@ if total_issues > 0:
         sys.exit(1)
     try:
         logger.info("Saving cleaned data to new Iceberg table: silver_complaints_clean_valid")
-        df_cleaned.writeTo("my_catalog.silver_complaints_clean_valid").createOrReplace()
+        
+        if not spark.catalog.tableExists("my_catalog.silver_complaints_clean_valid"):
+            df_cleaned.writeTo("my_catalog.silver_complaints_clean_valid").create()
+        else:
+            df_cleaned.writeTo("my_catalog.silver_complaints_clean_valid").append()
+
         logger.info("Cleaned table created successfully.")
     except Exception as e:
         logger.error(f"Failed to save cleaned table: {e}")

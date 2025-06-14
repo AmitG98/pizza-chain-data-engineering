@@ -56,7 +56,7 @@ if null_order_id_df.count() > 0:
     logger.warn(f"Null order_id: {null_order_id_df.count()}")
     issues.append(null_order_id_df)
 
-invalid_status_df = df.filter(~col("status").isin(["delivered", "delayed", "canceled"])) \
+invalid_status_df = df.filter(~col("status").isin(["on_time", "late"])) \
     .withColumn("issue", lit("invalid_status"))
 if invalid_status_df.count() > 0:
     logger.warn(f"Invalid status values: {invalid_status_df.count()}")
@@ -68,7 +68,12 @@ if issues:
     for other in issues[1:]:
         final_issues_df = final_issues_df.unionByName(other)
 
-    final_issues_df.writeTo("my_catalog.silver_orders_clean_quality_issues").createOrReplace()
+    # Write to Iceberg table
+    if not spark.catalog.tableExists("my_catalog.silver_orders_clean_quality_issues"):
+        final_issues_df.writeTo("my_catalog.silver_orders_clean_quality_issues").create()
+    else:
+        final_issues_df.writeTo("my_catalog.silver_orders_clean_quality_issues").append()
+
     logger.error("Data quality check failed. Issues saved to silver_orders_clean_quality_issues.")
     sys.exit(1)
 else:

@@ -76,7 +76,11 @@ df_clean = df.filter(
 if total_issues > 0:
     try:
         logger.info("Saving cleaned data to new Iceberg table: silver_weather_enriched_valid")
-        df_clean.writeTo("my_catalog.silver_weather_enriched_valid").createOrReplace()
+
+        if not spark.catalog.tableExists("my_catalog.silver_weather_enriched_valid"):
+            df_clean.writeTo("my_catalog.silver_weather_enriched_valid").create()
+        else:
+            df_clean.writeTo("my_catalog.silver_weather_enriched_valid").append()
         logger.info("Cleaned table created successfully.")
     except Exception as e:
         logger.error(f"Failed to save cleaned table: {e}")
