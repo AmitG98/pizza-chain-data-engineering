@@ -5,18 +5,21 @@ import time
 print("Waiting for Kafka to be ready...")
 time.sleep(20)
 
-print("Trying to connect to Kafka...")
-print("Creating KafkaConsumer...")
+print("Connecting to Kafka...")
 consumer = KafkaConsumer(
-    'orders-topic',
+    'orders-topic', 'orders-events-topic',
     bootstrap_servers='kafka:9092',
     value_deserializer=lambda m: json.loads(m.decode('utf-8')),
     auto_offset_reset='earliest',
     enable_auto_commit=True,
-    group_id='debug-consumer-group'
+    group_id='debug-combined-consumer'
 )
 
-print("Order Consumer is running and waiting for messages...")
+print("Combined Consumer is running...")
 
 for message in consumer:
-    print(f"Received order: {message.value}")
+    msg = message.value
+    if message.topic == 'orders-topic':
+        print(f"[ORDER] Order ID: {msg['order_id']} | ETA: {msg['estimated_delivery_time']} | Actual: {msg.get('actual_delivery_time', 'N/A')}")
+    else:
+        print(f"[EVENT] Order ID: {msg['order_id']} | Type: {msg['event_type']} | Time: {msg['event_time']}")

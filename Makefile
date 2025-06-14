@@ -46,6 +46,10 @@ streaming-run-all:
 streaming-down:
 	docker compose -f streaming/docker-compose.yml down
 
+streaming-down-producers-consumers:
+	docker compose -f streaming/docker-compose.yml stop order-producer weather-producer late-complaint-producer order-consumer weather-consumer late-complaint-consumer
+	docker compose -f streaming/docker-compose.yml rm -f order-producer weather-producer late-complaint-producer order-consumer weather-consumer late-complaint-consumer
+
 # ----------------------------
 # Run All Jobs
 # ----------------------------
@@ -56,7 +60,7 @@ all: bronze silver gold
 # Run Bronze Layer Jobs
 # ----------------------------
 
-bronze: bronze-orders bronze-weather bronze-complaints
+bronze: bronze-orders bronze-weather bronze-complaints bronze-order-events
 
 build-bronze:
 	@echo ">>> Building Bronze Layer Docker Images..."
@@ -65,6 +69,10 @@ build-bronze:
 bronze-orders:
 	@echo ">>> Running Bronze Orders Job..."
 	docker compose -f processing/app/spark_kafka_to_bronze/docker-compose.yml up --build --abort-on-container-exit --exit-code-from spark-orders-bronze
+
+bronze-order-events:
+	@echo ">>> Running Bronze Order Events Job..."
+	docker compose -f processing/app/spark_kafka_to_bronze/docker-compose.yml up --build --abort-on-container-exit --exit-code-from spark-order-events-bronze
 
 bronze-weather:
 	@echo ">>> Running Bronze Weather Job..."

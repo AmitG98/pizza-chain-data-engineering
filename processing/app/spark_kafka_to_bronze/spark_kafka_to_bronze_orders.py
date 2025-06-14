@@ -3,7 +3,7 @@ from pyspark.sql.functions import from_json, col
 from pyspark.sql.types import StructType, StringType, IntegerType, TimestampType
 from pyspark.sql.functions import current_timestamp, expr
 
-# Schema of the data coming from Kafka
+# Schema of the data coming from Kafka (no status)
 order_schema = StructType() \
     .add("order_id", IntegerType()) \
     .add("customer_id", IntegerType()) \
@@ -12,8 +12,7 @@ order_schema = StructType() \
     .add("timestamp", TimestampType()) \
     .add("delivery_address", StringType()) \
     .add("estimated_delivery_time", TimestampType()) \
-    .add("actual_delivery_time", TimestampType()) \
-    .add("status", StringType())
+    .add("actual_delivery_time", TimestampType())
 
 spark = SparkSession.builder \
     .appName("KafkaToBronzeOrders") \
@@ -26,6 +25,7 @@ spark = SparkSession.builder \
     .config("spark.hadoop.fs.s3a.path.style.access", "true") \
     .getOrCreate()
 
+# Table definition (no status)
 spark.sql("""
 CREATE TABLE IF NOT EXISTS my_catalog.orders_bronze (
   order_id INT,
@@ -35,13 +35,11 @@ CREATE TABLE IF NOT EXISTS my_catalog.orders_bronze (
   timestamp TIMESTAMP,
   delivery_address STRING,
   estimated_delivery_time TIMESTAMP,
-  actual_delivery_time TIMESTAMP,
-  status STRING
+  actual_delivery_time TIMESTAMP
 )
 USING iceberg
 """)
 
-# קריאה חד פעמית מ־Kafka
 df = spark.read \
     .format("kafka") \
     .option("kafka.bootstrap.servers", "kafka:9092") \
@@ -59,11 +57,3 @@ filtered = parsed.filter(
 )
 
 filtered.writeTo("my_catalog.orders_bronze").append()
-
-# query = filtered.writeStream \
-#     .format("iceberg") \
-#     .outputMode("append") \
-#     .option("checkpointLocation", "/tmp/checkpoints/orders_bronze") \
-#     .toTable("my_catalog.orders_bronze")
-
-# query.awaitTermination()
