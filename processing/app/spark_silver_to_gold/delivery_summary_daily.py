@@ -1,7 +1,7 @@
 from pyspark.sql import SparkSession
-from pyspark.sql.functions import to_date, col, count, when, first
+from pyspark.sql.functions import to_date, col, count, when, first, current_timestamp
 
-# Session
+# Spark session
 spark = SparkSession.builder \
     .appName("GoldDeliverySummaryDaily") \
     .config("spark.sql.catalog.my_catalog", "org.apache.iceberg.spark.SparkCatalog") \
@@ -13,31 +13,33 @@ spark = SparkSession.builder \
     .config("spark.hadoop.fs.s3a.path.style.access", "true") \
     .getOrCreate()
 
-# קלט
+# Load Silver tables
 deliveries_df = spark.read.format("iceberg").load("my_catalog.silver_deliveries_enriched")
 weather_df = spark.read.format("iceberg").load("my_catalog.silver_weather_enriched")
 
-# הוספת עמודת תאריך
+# Add date column
 deliveries_df = deliveries_df.withColumn("date", to_date("order_time"))
 
-# סיכום לפי יום
+# Aggregate delivery summary by date
 daily_summary = deliveries_df.groupBy("date").agg(
     count("*").alias("total_orders"),
     count(when(col("delay_category") == "late", True)).alias("late_orders")
 )
 
-# נניח שב-weather_enriched יש עמודת timestamp → נוציא את התאריך ונחבר לפי date
+# Add date to weather and aggregate one condition per day
 weather_df = weather_df.withColumn("date", to_date("order_time"))
 
-# ניקח את weather_summary הראשון באותו יום
 weather_summary_df = weather_df.groupBy("date").agg(
     first("weather_condition", ignorenulls=True).alias("weather_summary")
 )
 
-# חיבור שני הנתונים
+# Join delivery and weather summaries
 final_df = daily_summary.join(weather_summary_df, on="date", how="left")
 
-# כתיבה לטבלת GOLD
+# Add ingestion timestamp
+final_df = final_df.withColumn("ingestion_time", current_timestamp())
+
+# Write to Gold table
 if not spark.catalog.tableExists("my_catalog.gold_delivery_summary_daily"):
     final_df.writeTo("my_catalog.gold_delivery_summary_daily").createOrReplace()
 else:

@@ -1,5 +1,5 @@
 from pyspark.sql import SparkSession
-from pyspark.sql.functions import col, count
+from pyspark.sql.functions import col, count, current_timestamp
 
 # Session
 spark = SparkSession.builder \
@@ -13,23 +13,24 @@ spark = SparkSession.builder \
     .config("spark.hadoop.fs.s3a.path.style.access", "true") \
     .getOrCreate()
 
-# קלט
+# Input
 complaints_df = spark.read.format("iceberg").load("my_catalog.silver_complaints_clean")
 
-# סך כל התלונות
+# Total complaints
 total_complaints = complaints_df.count()
 
-# קיבוץ לפי סוג תלונה
+# Grouping by complaint type
 complaints_by_type = complaints_df.groupBy("complaint_type").agg(
     count("*").alias("count")
 )
 
-# חישוב אחוז מתוך כלל התלונות
+# Calculate percentage of total complaints
 complaints_by_type = complaints_by_type.withColumn(
     "percent_of_orders", col("count") / total_complaints
 )
 
-# כתיבה לטבלת GOLD
+complaints_by_type = complaints_by_type.withColumn("ingestion_time", current_timestamp())
+
 if not spark.catalog.tableExists("my_catalog.gold_complaints_by_type"):
     complaints_by_type.writeTo("my_catalog.gold_complaints_by_type").createOrReplace()
 else:
