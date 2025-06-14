@@ -10,7 +10,7 @@ COPY bronze_to_silver_complaints.py /opt/bitnami/spark/app/
 COPY bronze_to_silver_weather.py /opt/bitnami/spark/app/
 COPY bronze_to_silver_deliveries.py /opt/bitnami/spark/app/
 COPY generate_silver_dim_time.py /opt/bitnami/spark/app/
-COPY silver_dim_store.py /opt/bitnami/spark/app/
+COPY silver_dim_order_status.py /opt/bitnami/spark/app/
 
 WORKDIR /opt/bitnami/spark/app/
 

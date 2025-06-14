@@ -1,5 +1,5 @@
 from pyspark.sql import SparkSession
-from pyspark.sql.functions import col, unix_timestamp, expr, trim, lower, size, when
+from pyspark.sql.functions import col, unix_timestamp, expr, trim, lower, size, when, current_timestamp
 from pyspark.sql.functions import abs as abs_spark
 
 
@@ -55,9 +55,13 @@ result = joined.select(
     "weather.weather_condition"
 ).dropDuplicates()
 
+# Add ingestion time
+result = result.withColumn("ingestion_time", current_timestamp())
+
 # Write to Silver table
 if not spark.catalog.tableExists("my_catalog.silver_weather_enriched"):
     result.writeTo("my_catalog.silver_weather_enriched").createOrReplace()
 else:
     result.writeTo("my_catalog.silver_weather_enriched").append()
+
 

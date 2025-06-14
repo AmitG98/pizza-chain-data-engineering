@@ -102,8 +102,8 @@ services:
     networks:
       - data-net
 
-  spark-silver-dim-store:
-    container_name: spark-silver-dim-store
+  spark-silver-dim-order-status:
+    container_name: spark-silver-dim-order-status
     build: .
     command: >
       spark-submit
@@ -114,9 +114,10 @@ services:
       --conf spark.hadoop.fs.s3a.secret.key=minioadmin
       --conf spark.hadoop.fs.s3a.endpoint=http://minio:9000
       --conf spark.hadoop.fs.s3a.path.style.access=true
-      spark_bronze_to_silver/silver_dim_store.py
+      spark_bronze_to_silver/silver_dim_order_status.py
     networks:
       - data-net
+
 
 networks:
   data-net:
