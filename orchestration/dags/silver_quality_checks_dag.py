@@ -9,7 +9,7 @@ default_args = {
 
 with DAG('silver_quality_checks',
          default_args=default_args,
-         schedule_interval='@daily',
+         schedule_interval=None,
          catchup=False,
          tags=['quality', 'silver']) as dag:
 

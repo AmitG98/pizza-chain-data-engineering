@@ -9,7 +9,7 @@ default_args = {
 
 with DAG('bronze_to_silver_deliveries',
          default_args=default_args,
-         schedule_interval='@daily',
+         schedule_interval=None,
          catchup=False,
          tags=['silver', 'deliveries']) as dag:
 

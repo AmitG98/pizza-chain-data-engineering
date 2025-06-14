@@ -9,7 +9,7 @@ default_args = {
 
 with DAG('generate_silver_dim_time',
          default_args=default_args,
-         schedule_interval='@once',
+         schedule_interval=None,
          catchup=False,
          tags=['silver', 'dim']) as dag:
 

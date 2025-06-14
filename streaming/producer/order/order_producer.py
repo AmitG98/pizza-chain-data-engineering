@@ -119,7 +119,7 @@ while True:
         for event in events:
             print(f"Sending event: {event}")
             producer.send('orders-events-topic', event).get(timeout=10)
-            time.sleep(1)
+            time.sleep(random.uniform(1, 2))
     except Exception as e:
         print(f"Failed to send: {e}")
-    time.sleep(3)
+    time.sleep(random.uniform(4, 7))

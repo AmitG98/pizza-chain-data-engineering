@@ -9,7 +9,7 @@ default_args = {
 
 with DAG('gold_store_performance',
          default_args=default_args,
-         schedule_interval='@daily',
+         schedule_interval=None,
          catchup=False,
          tags=['gold', 'store']) as dag:
 

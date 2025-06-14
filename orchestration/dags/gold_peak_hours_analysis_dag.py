@@ -9,7 +9,7 @@ default_args = {
 
 with DAG('gold_peak_hours_analysis',
          default_args=default_args,
-         schedule_interval='@daily',
+         schedule_interval=None,
          catchup=False,
          tags=['gold', 'analysis']) as dag:
 

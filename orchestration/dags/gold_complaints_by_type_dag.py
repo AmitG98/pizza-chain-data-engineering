@@ -9,7 +9,7 @@ default_args = {
 
 with DAG('gold_complaints_by_type',
          default_args=default_args,
-         schedule_interval='@daily',
+         schedule_interval=None,
          catchup=False,
          tags=['gold', 'complaints']) as dag:
 

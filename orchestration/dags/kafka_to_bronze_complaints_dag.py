@@ -9,7 +9,7 @@ default_args = {
 
 with DAG('kafka_to_bronze_complaints',
          default_args=default_args,
-         schedule_interval='@daily',
+         schedule_interval=None,
          catchup=False,
          tags=['bronze', 'kafka', 'complaints']) as dag:
 

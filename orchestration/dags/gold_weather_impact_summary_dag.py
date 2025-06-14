@@ -9,7 +9,7 @@ default_args = {
 
 with DAG('gold_weather_impact_summary',
          default_args=default_args,
-         schedule_interval='@daily',
+         schedule_interval=None,
          catchup=False,
          tags=['gold', 'weather']) as dag:
 
