@@ -86,7 +86,7 @@ bronze-complaints:
 # Run Silver Layer Jobs
 # ----------------------------
 
-silver: silver-orders silver-complaints silver-weather silver-deliveries silver-dim-time silver-dim-store
+silver: silver-orders silver-complaints silver-weather silver-deliveries silver-dim-time silver-dim-order-status silver-order-events
 
 build-silver:
 	@echo ">>> Building Silver Layer Docker Images..."
@@ -95,6 +95,10 @@ build-silver:
 silver-orders:
 	@echo ">>> Running Silver Orders Job..."
 	docker compose -f processing/app/spark_bronze_to_silver/docker-compose.yml run spark-silver-orders spark-submit /opt/bitnami/spark/app/bronze_to_silver_orders.py
+
+silver-order-events:
+	@echo ">>> Running Silver Order Events Job..."
+	docker compose -f processing/app/spark_bronze_to_silver/docker-compose.yml run spark-silver-order-events spark-submit /opt/bitnami/spark/app/bronze_to_silver_order_events.py
 
 silver-complaints:
 	@echo ">>> Running Silver Complaints Job..."
@@ -114,7 +118,7 @@ silver-dim-time:
 
 silver-dim-order-status:
 	@echo ">>> Running Silver Dim Order Status Job..."
-	docker compose -f processing/app/spark_bronze_to_silver/docker-compose.yml run spark-silver-dim-store spark-submit /opt/bitnami/spark/app/silver_dim_order_status.py
+	docker compose -f processing/app/spark_bronze_to_silver/docker-compose.yml run spark-silver-dim-order-status spark-submit /opt/bitnami/spark/app/silver_dim_order_status.py
 
 # ----------------------------
 # Run Gold Layer Jobs
@@ -126,7 +130,8 @@ gold: \
     gold-delivery-summary \
     gold-peak-hours \
     gold-weather-impact \
-    gold-store-performance
+    gold-store-performance \
+    gold-daily-business-summary
 
 build-gold:
 	@echo ">>> Building Gold Layer Docker Images..."
@@ -155,6 +160,10 @@ gold-weather-impact:
 gold-store-performance:
 	@echo ">>> Running Gold Store Performance Job..."
 	docker compose -f processing/app/spark_silver_to_gold/docker-compose.yml up --build --abort-on-container-exit --exit-code-from spark-gold-store-performance
+
+gold-daily-business-summary:
+	@echo ">>> Running Gold Daily Business Summary Job..."
+	docker compose -f processing/app/spark_silver_to_gold/docker-compose.yml up --build --abort-on-container-exit --exit-code-from spark-gold-daily-business-summary
 
 # ----------------------------
 # Stop All Spark Jobs (Bronze, Silver, Gold)
@@ -212,9 +221,9 @@ quality-dim-time:
 	@echo ">>> Running Data Quality Checks for Dim Time..."
 	docker compose -f processing/app/data_quality/docker-compose.yml run --rm spark-quality-dim-time
 
-quality-dim-store:
-	@echo ">>> Running Data Quality Checks for Dim Store..."
-	docker compose -f processing/app/data_quality/docker-compose.yml run --rm spark-quality-dim-store
+quality-order-status:
+	@echo ">>> Running Data Quality Checks for Order Status (SCD2)..."
+	docker compose -f processing/app/data_quality/docker-compose.yml run --rm spark-quality-dim-order-status
 
 # ----------------------------
 # Run Data Air flow

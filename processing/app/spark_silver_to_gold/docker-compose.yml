@@ -123,7 +123,7 @@ services:
       --conf spark.hadoop.fs.s3a.secret.key=minioadmin
       --conf spark.hadoop.fs.s3a.endpoint=http://minio:9000
       --conf spark.hadoop.fs.s3a.path.style.access=true
-      daily_business_summary.py
+      gols_daily_business_summary.py
     networks:
       - data-net
 
