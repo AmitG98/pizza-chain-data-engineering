@@ -68,4 +68,4 @@ with DAG('silver_quality_checks',
     )
 
     # Execution order: everything after orders
-    check_orders >> [check_complaints, check_weather, check_dim_time, check_dim_store] >> check_deliveries
+    check_orders >> [check_complaints, check_weather, check_dim_time, check_order_status] >> check_deliveries
