@@ -31,9 +31,15 @@ project-root/
 
 ## How to Run Locally
 
-### Prerequisites
+## Requirements
 
-- Docker & Docker Compose
+- Docker + Docker Compose
+- On **Windows** or **Mac**, please ensure Docker Desktop is running.
+- On **Linux**, Docker can be used without Docker Desktop.
+
+# Test Docker is working by running:
+docker info
+
 - No ports in use on: `9000` (MinIO), `8080` (Airflow), `9092` (Kafka)
 
 ### Testing the Pipeline
