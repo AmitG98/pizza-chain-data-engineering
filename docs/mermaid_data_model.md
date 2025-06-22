@@ -217,4 +217,3 @@ erDiagram
     timestamp ingestion_time
   }
   class gold_daily_business_summary_AGG gold
-```
