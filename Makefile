@@ -37,9 +37,8 @@ streaming-run-consumers:
 	docker compose -f streaming/docker-compose.yml up -d order-consumer weather-consumer late-complaint-consumer
 
 streaming-run-all:
-	docker compose -f streaming/docker-compose.yml down -v
 	docker compose -f streaming/docker-compose.yml build
-	docker compose -f streaming/docker-compose.yml up -d
+	docker compose -f streaming/docker-compose.yml up -d zookeeper kafka order-producer weather-producer late-complaint-producer order-consumer weather-consumer late-complaint-consumer
 	docker network connect data-net kafka || true
 
 streaming-down:
@@ -48,6 +47,40 @@ streaming-down:
 streaming-down-producers-consumers:
 	docker compose -f streaming/docker-compose.yml stop order-producer weather-producer late-complaint-producer order-consumer weather-consumer late-complaint-consumer
 	docker compose -f streaming/docker-compose.yml rm -f order-producer weather-producer late-complaint-producer order-consumer weather-consumer late-complaint-consumer
+
+logs-order-producer:
+	docker logs -f order_producer
+
+logs-complaint-producer:
+	docker logs -f late_complaint_producer
+
+logs-weather-producer:
+	docker logs -f weather_producer
+
+logs-order-consumer:
+	docker logs -f order_consumer
+
+logs-complaint-consumer:
+	docker logs -f late_complaint_consumer
+
+logs-weather-consumer:
+	docker logs -f weather_consumer
+
+logs-producers:
+	( \
+		docker logs -f order_producer & \
+		docker logs -f late_complaint_producer & \
+		docker logs -f weather_producer & \
+		wait \
+	)
+
+logs-consumers:
+	( \
+		docker logs -f order_consumer & \
+		docker logs -f late_complaint_consumer & \
+		docker logs -f weather_consumer & \
+		wait \
+	)
 
 # ----------------------------
 # Run All Jobs

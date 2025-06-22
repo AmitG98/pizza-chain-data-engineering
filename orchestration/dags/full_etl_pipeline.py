@@ -1,6 +1,8 @@
 from airflow import DAG
 from airflow.providers.docker.operators.docker import DockerOperator
 from datetime import datetime
+from airflow.models.baseoperator import chain
+
 
 default_args = {
     'retries': 1,
@@ -9,17 +11,17 @@ default_args = {
 with DAG('full_etl_pipeline',
          default_args=default_args,
          schedule_interval=None,
-         catchup=False,
+         catchup=True,
          tags=['pipeline']) as dag:
     
-    # silver_dim_time
+        # silver_dim_time
     silver_dim_time = DockerOperator(
         task_id='silver_dim_time',
         image='spark_bronze_to_silver-spark-silver-dim-time',
         auto_remove=True,
         command="spark-submit /opt/bitnami/spark/app/generate_silver_dim_time.py",
         docker_url='unix://var/run/docker.sock',
-        network_mode='data-net',
+        network_mode='data-net'
     )
 
     # BRONZE
@@ -27,7 +29,11 @@ with DAG('full_etl_pipeline',
         task_id='orders_bronze',
         image='spark_kafka_to_bronze-spark-orders-bronze',
         auto_remove=True,
-        command="""spark-submit --packages org.apache.spark:spark-sql-kafka-0-10_2.12:3.5.1,org.apache.spark:spark-token-provider-kafka-0-10_2.12:3.5.1 /opt/bitnami/spark/app/spark_kafka_to_bronze_orders.py""",
+        command="""
+        spark-submit \
+        --packages org.apache.spark:spark-sql-kafka-0-10_2.12:3.5.1,org.apache.spark:spark-token-provider-kafka-0-10_2.12:3.5.1 \
+        /opt/bitnami/spark/app/spark_kafka_to_bronze_orders.py
+        """,
         docker_url='unix://var/run/docker.sock',
         network_mode='data-net'
     )
@@ -36,7 +42,11 @@ with DAG('full_etl_pipeline',
         task_id='order_events_bronze',
         image='spark_kafka_to_bronze-spark-order-events-bronze',
         auto_remove=True,
-        command="""spark-submit --packages org.apache.spark:spark-sql-kafka-0-10_2.12:3.5.1,org.apache.spark:spark-token-provider-kafka-0-10_2.12:3.5.1 /opt/bitnami/spark/app/spark_kafka_to_bronze_order_events.py""",
+        command="""
+        spark-submit \
+        --packages org.apache.spark:spark-sql-kafka-0-10_2.12:3.5.1,org.apache.spark:spark-token-provider-kafka-0-10_2.12:3.5.1 \
+        /opt/bitnami/spark/app/spark_kafka_to_bronze_order_events.py
+        """,
         docker_url='unix://var/run/docker.sock',
         network_mode='data-net'
     )
@@ -45,7 +55,11 @@ with DAG('full_etl_pipeline',
         task_id='complaints_bronze',
         image='spark_kafka_to_bronze-spark-complaints-bronze',
         auto_remove=True,
-        command="""spark-submit --packages org.apache.spark:spark-sql-kafka-0-10_2.12:3.5.1,org.apache.spark:spark-token-provider-kafka-0-10_2.12:3.5.1 /opt/bitnami/spark/app/spark_kafka_to_bronze_complaints.py""",
+        command="""
+        spark-submit \
+        --packages org.apache.spark:spark-sql-kafka-0-10_2.12:3.5.1,org.apache.spark:spark-token-provider-kafka-0-10_2.12:3.5.1 \
+        /opt/bitnami/spark/app/spark_kafka_to_bronze_complaints.py
+        """,
         docker_url='unix://var/run/docker.sock',
         network_mode='data-net'
     )
@@ -54,7 +68,11 @@ with DAG('full_etl_pipeline',
         task_id='weather_bronze',
         image='spark_kafka_to_bronze-spark-weather-bronze',
         auto_remove=True,
-        command="""spark-submit --packages org.apache.spark:spark-sql-kafka-0-10_2.12:3.5.1,org.apache.spark:spark-token-provider-kafka-0-10_2.12:3.5.1 /opt/bitnami/spark/app/spark_kafka_to_bronze_weather.py""",
+        command="""
+        spark-submit \
+        --packages org.apache.spark:spark-sql-kafka-0-10_2.12:3.5.1,org.apache.spark:spark-token-provider-kafka-0-10_2.12:3.5.1 \
+        /opt/bitnami/spark/app/spark_kafka_to_bronze_weather.py
+        """,
         docker_url='unix://var/run/docker.sock',
         network_mode='data-net'
     )
@@ -179,8 +197,13 @@ with DAG('full_etl_pipeline',
     )
 
     # Dependencies
-    [orders_bronze, order_events_bronze, complaints_bronze, weather_bronze, silver_dim_time] >> \
-    [silver_orders, silver_order_events, silver_complaints] >> \
-    [silver_weather, dim_order_status] >> \
-    silver_deliveries >> \
-    [gold_complaints, gold_metrics, gold_summary, gold_business, gold_peak_hours, gold_store_perf, gold_weather]
+    for upstream in [orders_bronze, order_events_bronze, complaints_bronze, weather_bronze, silver_dim_time]:
+        [upstream >> t for t in [silver_orders, silver_order_events, silver_complaints]]
+
+    for upstream in [silver_orders, silver_order_events, silver_complaints]:
+        [upstream >> t for t in [silver_weather, dim_order_status]]
+
+    [silver_weather, dim_order_status] >> silver_deliveries
+
+    for t in [gold_complaints, gold_metrics, gold_summary, gold_business, gold_peak_hours, gold_store_perf, gold_weather]:
+        silver_deliveries >> t
