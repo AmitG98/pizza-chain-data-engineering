@@ -49,6 +49,12 @@ make minio-up
 
 # 2. Start Kafka + all producers & consumers
 make streaming-run-all
+# or
+make streaming-kafka
+make streaming-build-producers
+make streaming-build-consumers
+make streaming-run-producers
+make streaming-run-consumers
 
 # 3. Start Airflow
 make airflow-up
